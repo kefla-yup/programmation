@@ -1,0 +1,68 @@
+<!-- ========== NAVBAR ========== -->
+<header class="app-navbar">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <button class="sidebar-toggle" (click)="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <div class="brand">
+      <div class="brand-icon">🐔</div>
+      <span>Poulet Pro</span>
+    </div>
+  </div>
+  <div class="nav-right">
+    <div class="user-pill">
+      <div class="user-avatar">I</div>
+      <span class="user-name">Itiela</span>
+    </div>
+  </div>
+</header>
+
+<!-- ========== SIDEBAR ========== -->
+<app-sidebar
+  [currentView]="currentView"
+  [sidebarOpen]="sidebarOpen"
+  (viewChange)="setView($event)"
+  (sidebarClose)="closeSidebar()">
+</app-sidebar>
+
+<!-- ========== SIDEBAR OVERLAY (mobile) ========== -->
+<div class="sidebar-overlay" [class.show]="sidebarOpen" (click)="closeSidebar()"></div>
+
+<!-- ========== MOBILE BOTTOM NAV ========== -->
+<nav class="mobile-bottom-nav" style="display:none;">
+  <a href="#" [class.active]="currentView === 'stock'" (click)="setView('stock'); $event.preventDefault()">
+    <i class="bi bi-graph-up"></i><span>Stock</span>
+  </a>
+  <a href="#" [class.active]="currentView === 'lots'" (click)="setView('lots'); $event.preventDefault()">
+    <i class="bi bi-box-seam"></i><span>Poulets</span>
+  </a>
+  <a href="#" [class.active]="currentView === 'oeufs'" (click)="setView('oeufs'); $event.preventDefault()">
+    <i class="bi bi-egg"></i><span>Oeufs</span>
+  </a>
+  <a href="#" [class.active]="currentView === 'transformation'" (click)="setView('transformation'); $event.preventDefault()">
+    <i class="bi bi-arrow-repeat"></i><span>Transfo</span>
+  </a>
+  <a href="#" [class.active]="currentView === 'mortalite'" (click)="setView('mortalite'); $event.preventDefault()">
+    <i class="bi bi-heart-pulse"></i><span>Mortalité</span>
+  </a>
+</nav>
+
+<!-- ========== MAIN CONTENT ========== -->
+<main class="app-main">
+
+  <!-- Toast Messages -->
+  <div *ngIf="msg.message" class="alert alert-custom fade-in"
+       [ngClass]="{'alert-success': msg.messageType === 'success', 'alert-danger': msg.messageType === 'error'}">
+    <i class="bi me-2" [ngClass]="{'bi-check-circle-fill': msg.messageType === 'success', 'bi-exclamation-triangle-fill': msg.messageType === 'error'}"></i>
+    {{ msg.message }}
+    <button type="button" class="btn-close float-end" (click)="msg.clear()"></button>
+  </div>
+
+  <!-- Views -->
+  <app-config-poids *ngIf="currentView === 'configPoids'"></app-config-poids>
+  <app-config-prix *ngIf="currentView === 'configPrix'"></app-config-prix>
+  <app-lots *ngIf="currentView === 'lots'"></app-lots>
+  <app-oeufs *ngIf="currentView === 'oeufs'"></app-oeufs>
+  <app-transformation *ngIf="currentView === 'transformation'"></app-transformation>
+  <app-mortalite *ngIf="currentView === 'mortalite'"></app-mortalite>
+  <app-stock *ngIf="currentView === 'stock'"></app-stock>
+
+</main>

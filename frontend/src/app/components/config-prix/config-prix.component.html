@@ -1,0 +1,73 @@
+<div class="fade-in">
+  <div class="page-header">
+    <h4><i class="bi bi-currency-exchange"></i>Configuration Prix</h4>
+  </div>
+
+  <!-- Formulaire -->
+  <div class="card mb-3">
+    <div class="card-header header-warning">Modifier les Prix</div>
+    <div class="card-body">
+      <form (ngSubmit)="save()">
+        <div class="row g-3">
+          <div class="col-12 col-md-3">
+            <label class="form-label">Race</label>
+            <select class="form-select" [(ngModel)]="form.race_id" name="race_id" required>
+              <option *ngFor="let r of races" [ngValue]="r.id">{{ r.nom }}</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label">Prix Achat (Ar/g)</label>
+            <input type="number" class="form-control" [(ngModel)]="form.prix_achat_gramme" name="prix_achat" step="0.01" required>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label">Prix Vente (Ar/g)</label>
+            <input type="number" class="form-control" [(ngModel)]="form.prix_vente_gramme" name="prix_vente" step="0.01" required>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label">Prix Nourriture (Ar/g)</label>
+            <input type="number" class="form-control" [(ngModel)]="form.prix_nourriture_gramme" name="prix_nourriture" step="0.01">
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label">Prix Oeuf (Ar)</label>
+            <input type="number" class="form-control" [(ngModel)]="form.prix_oeuf" name="prix_oeuf" step="0.01">
+          </div>
+          <div class="col-6 col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-success"><i class="bi bi-save me-1"></i>Enregistrer</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tableau -->
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Race</th>
+              <th>Prix Achat</th>
+              <th>Prix Vente</th>
+              <th>Prix Nourriture</th>
+              <th>Prix Oeuf</th>
+              <th>Marge</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of prixList">
+              <td><strong>{{ item.race_nom }}</strong></td>
+              <td>{{ item.prix_achat_gramme | number:'1.0-0' }} Ar</td>
+              <td>{{ item.prix_vente_gramme | number:'1.0-0' }} Ar</td>
+              <td>{{ item.prix_nourriture_gramme | number:'1.0-0' }} Ar/g</td>
+              <td>{{ item.prix_oeuf | number:'1.0-0' }} Ar</td>
+              <td><span class="badge bg-success">+{{ item.prix_vente_gramme - item.prix_achat_gramme | number:'1.0-0' }} Ar/g</span></td>
+              <td><button class="btn btn-outline-warning btn-sm" (click)="edit(item)"><i class="bi bi-pencil"></i></button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

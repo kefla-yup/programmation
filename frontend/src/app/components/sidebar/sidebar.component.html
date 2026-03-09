@@ -1,0 +1,46 @@
+<aside class="app-sidebar" [class.show]="sidebarOpen">
+  <div class="sidebar-section">
+    <div class="sidebar-label">Configuration</div>
+    <ul class="sidebar-nav">
+      <li><a href="#" [class.active]="currentView === 'configPoids'" (click)="setView('configPoids'); $event.preventDefault()">
+        <i class="bi bi-speedometer2"></i><span>Poids</span>
+      </a></li>
+      <li><a href="#" [class.active]="currentView === 'configPrix'" (click)="setView('configPrix'); $event.preventDefault()">
+        <i class="bi bi-currency-exchange"></i><span>Prix</span>
+      </a></li>
+    </ul>
+  </div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Entrées</div>
+    <ul class="sidebar-nav">
+      <li><a href="#" [class.active]="currentView === 'lots'" (click)="setView('lots'); $event.preventDefault()">
+        <i class="bi bi-box-seam"></i><span>Poulets</span>
+      </a></li>
+      <li><a href="#" [class.active]="currentView === 'oeufs'" (click)="setView('oeufs'); $event.preventDefault()">
+        <i class="bi bi-egg"></i><span>Oeufs</span>
+      </a></li>
+    </ul>
+  </div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Opérations</div>
+    <ul class="sidebar-nav">
+      <li><a href="#" [class.active]="currentView === 'transformation'" (click)="setView('transformation'); $event.preventDefault()">
+        <i class="bi bi-arrow-repeat"></i><span>Transformation</span>
+      </a></li>
+      <li><a href="#" [class.active]="currentView === 'mortalite'" (click)="setView('mortalite'); $event.preventDefault()">
+        <i class="bi bi-heart-pulse"></i><span>Mortalité</span>
+      </a></li>
+    </ul>
+  </div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Rapports</div>
+    <ul class="sidebar-nav">
+      <li><a href="#" [class.active]="currentView === 'stock'" (click)="setView('stock'); $event.preventDefault()">
+        <i class="bi bi-graph-up"></i><span>Vue Stock</span>
+      </a></li>
+    </ul>
+  </div>
+</aside>

@@ -1,0 +1,108 @@
+<div class="fade-in">
+  <div class="page-header">
+    <h4><i class="bi bi-box-seam"></i>Entrée Poulets</h4>
+    <button class="btn btn-primary" (click)="showForm = !showForm">
+      <i class="bi bi-plus-lg"></i><span class="d-none d-sm-inline">Nouveau Lot</span>
+    </button>
+  </div>
+
+  <!-- Formulaire -->
+  <div class="card mb-3" *ngIf="showForm">
+    <div class="card-header header-primary">Nouveau Lot</div>
+    <div class="card-body">
+      <form (ngSubmit)="add()">
+        <div class="row g-3">
+          <div class="col-6 col-md-2">
+            <label class="form-label">Nom du Lot</label>
+            <input type="text" class="form-control" [(ngModel)]="form.nom" name="nom" required>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label">Date Entrée</label>
+            <input type="date" class="form-control" [(ngModel)]="form.date_entree" name="date_entree" required>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label">Nombre</label>
+            <input type="number" class="form-control" [(ngModel)]="form.nombre" name="nombre" min="1" required>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label">Race</label>
+            <select class="form-select" [(ngModel)]="form.race_id" name="race_id" required>
+              <option *ngFor="let r of races" [ngValue]="r.id">{{ r.nom }}</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label">Âge (Semaine)</label>
+            <input type="number" class="form-control" [(ngModel)]="form.age_entree_semaine" name="age" min="0" required>
+          </div>
+          <div class="col-6 col-md-2 d-flex align-items-end gap-2">
+            <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i></button>
+            <button type="button" class="btn btn-secondary" (click)="showForm = false"><i class="bi bi-x-lg"></i></button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tableau -->
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Lot</th>
+              <th>Date</th>
+              <th>Nombre</th>
+              <th>Race</th>
+              <th>Âge</th>
+              <th>Poids Init.</th>
+              <th>Source</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let lot of lotsList">
+              <tr *ngIf="editing !== lot.id">
+                <td><strong>{{ lot.nom }}</strong></td>
+                <td>{{ lot.date_entree | date:'dd/MM/yyyy':'UTC' }}</td>
+                <td>{{ lot.nombre }}</td>
+                <td><span class="badge bg-primary">{{ lot.race_nom }}</span></td>
+                <td><span class="badge bg-info">S{{ lot.age_entree_semaine }}</span></td>
+                <td>{{ lot.poids_initial }} g</td>
+                <td>
+                  <span class="badge badge-source"
+                        [ngClass]="{'bg-success': lot.source === 'direct', 'bg-warning text-dark': lot.source === 'transformation'}">
+                    {{ lot.source }}
+                  </span>
+                </td>
+                <td>
+                  <button class="btn btn-outline-warning btn-sm me-1" (click)="edit(lot)" *ngIf="lot.source !== 'transformation'"><i class="bi bi-pencil"></i></button>
+                  <button class="btn btn-outline-danger btn-sm" (click)="remove(lot.id)" *ngIf="lot.source !== 'transformation'"><i class="bi bi-trash"></i></button>
+                </td>
+              </tr>
+              <tr *ngIf="editing === lot.id" class="table-warning">
+                <td><input type="text" class="form-control form-control-sm" [(ngModel)]="editForm.nom"></td>
+                <td><input type="date" class="form-control form-control-sm" [(ngModel)]="editForm.date_entree"></td>
+                <td><input type="number" class="form-control form-control-sm" [(ngModel)]="editForm.nombre" min="1"></td>
+                <td>
+                  <select class="form-select form-select-sm" [(ngModel)]="editForm.race_id">
+                    <option *ngFor="let r of races" [ngValue]="r.id">{{ r.nom }}</option>
+                  </select>
+                </td>
+                <td><input type="number" class="form-control form-control-sm" [(ngModel)]="editForm.age_entree_semaine" min="0"></td>
+                <td colspan="2"></td>
+                <td>
+                  <button class="btn btn-success btn-sm me-1" (click)="saveEdit(lot.id)"><i class="bi bi-check-lg"></i></button>
+                  <button class="btn btn-secondary btn-sm" (click)="cancelEdit()"><i class="bi bi-x-lg"></i></button>
+                </td>
+              </tr>
+            </ng-container>
+            <tr *ngIf="lotsList.length === 0">
+              <td colspan="8" class="empty-state"><i class="bi bi-inbox"></i>Aucun lot enregistré</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,74 @@
+<div class="fade-in">
+  <div class="page-header">
+    <h4><i class="bi bi-arrow-repeat"></i>Transformation Oeuf → Poulet</h4>
+    <button class="btn btn-primary" (click)="showForm = !showForm">
+      <i class="bi bi-plus-lg"></i><span class="d-none d-sm-inline">Transformer</span>
+    </button>
+  </div>
+
+  <!-- Formulaire -->
+  <div class="card mb-3" *ngIf="showForm">
+    <div class="card-header header-success">Nouvelle Transformation</div>
+    <div class="card-body">
+      <form (ngSubmit)="transform()">
+        <div class="row g-3">
+          <div class="col-12 col-md-3">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-control" [(ngModel)]="form.date_transformation" name="date_transformation" required>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label">Race</label>
+            <select class="form-select" [(ngModel)]="form.race_id" name="race_id" required>
+              <option *ngFor="let r of races" [ngValue]="r.id">{{ r.nom }}</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label">Oeufs</label>
+            <input type="number" class="form-control" [(ngModel)]="form.oeufs_transformes" name="oeufs" min="1" required>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label">Poussins</label>
+            <input type="number" class="form-control" [(ngModel)]="form.nouveaux_poussins" name="poussins" min="1" required>
+          </div>
+          <div class="col-6 col-md-3 d-flex align-items-end gap-2">
+            <button type="submit" class="btn btn-success"><i class="bi bi-check-lg me-1"></i>Transformer</button>
+            <button type="button" class="btn btn-secondary" (click)="showForm = false"><i class="bi bi-x-lg"></i></button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tableau -->
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Race</th>
+              <th>Oeufs</th>
+              <th>Poussins</th>
+              <th>Lot</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of transformationList">
+              <td>{{ t.date_transformation | date:'dd/MM/yyyy':'UTC' }}</td>
+              <td><span class="badge bg-primary">{{ t.race_nom }}</span></td>
+              <td>{{ t.oeufs_transformes }}</td>
+              <td><strong>{{ t.nouveaux_poussins }}</strong></td>
+              <td><span class="badge bg-warning text-dark">{{ t.lot_nom || 'Lot #' + t.lot_id }}</span></td>
+              <td><button class="btn btn-outline-danger btn-sm" (click)="remove(t.id)"><i class="bi bi-trash"></i></button></td>
+            </tr>
+            <tr *ngIf="transformationList.length === 0">
+              <td colspan="6" class="empty-state"><i class="bi bi-inbox"></i>Aucune transformation</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

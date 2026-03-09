@@ -1,0 +1,112 @@
+<div class="fade-in">
+  <div class="page-header">
+    <h4><i class="bi bi-graph-up"></i>Vue Stock</h4>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <label class="form-label mb-0 small-muted d-none d-sm-inline"><strong>Date :</strong></label>
+      <input type="date" class="form-control" style="max-width:170px;" [(ngModel)]="dateFiltre" (ngModelChange)="load()">
+      <label class="form-label mb-0 small-muted d-none d-sm-inline"><strong>Nourriture :</strong></label>
+      <select class="form-select" style="max-width:130px;" [(ngModel)]="periodeNourriture">
+        <option value="jour">Par Jour</option>
+        <option value="semaine">Par Semaine</option>
+        <option value="mois">Par Mois</option>
+        <option value="total">Total Cumulé</option>
+      </select>
+      <button class="btn btn-primary btn-sm" (click)="load()">
+        <i class="bi bi-arrow-clockwise"></i><span class="d-none d-sm-inline ms-1">Actualiser</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats globales -->
+  <div class="row mb-4 stats-row g-3">
+    <div class="col-6 col-lg-3">
+      <div class="card stats-card blue">
+        <div class="stat-icon"><i class="bi bi-layers"></i></div>
+        <div class="stat-value">{{ stockList.length }}</div>
+        <div class="stat-label">Total Lots</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card stats-card green">
+        <div class="stat-icon"><i class="bi bi-heart"></i></div>
+        <div class="stat-value">{{ getTotalVivants() }}</div>
+        <div class="stat-label">Poulets Vivants</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card stats-card orange">
+        <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
+        <div class="stat-value">{{ getTotalVente() | number:'1.0-0' }}</div>
+        <div class="stat-label">CA ({{ getPeriodeLabel() }})</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card stats-card" [ngClass]="{'green': getTotalBenefice() >= 0, 'red': getTotalBenefice() < 0}">
+        <div class="stat-icon"><i class="bi bi-graph-up-arrow"></i></div>
+        <div class="stat-value" [ngClass]="{'text-success': getTotalBenefice() >= 0, 'text-danger': getTotalBenefice() < 0}">
+          {{ getTotalBenefice() | number:'1.0-0' }}
+        </div>
+        <div class="stat-label">Bénéfice ({{ getPeriodeLabel() }})</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau stock -->
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Lot</th>
+              <th>Race</th>
+              <th>Prix Achat</th>
+              <th>Prix de Vente</th>
+              <th>Nombre Poulet</th>
+              <th>Mort</th>
+              <th>Nombre d'Oeuf</th>
+              <th>Semaine</th>
+              <th>Poids Moy</th>
+              <th>Prix Nourriture ({{ getPeriodeLabel() }})</th>
+              <th>Est. Prix Oeuf</th>
+              <th>Bénéfices ({{ getPeriodeLabel() }})</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of stockList">
+              <td>
+                <strong>{{ s.lot_nom }}</strong>
+                <br><small class="small-muted">{{ s.date_entree | date:'dd/MM/yy':'UTC' }}</small>
+              </td>
+              <td><span class="badge bg-primary">{{ s.race_nom }}</span></td>
+              <td class="text-warning">{{ s.prix_achat_lot | number:'1.0-0' }} Ar</td>
+              <td class="text-success"><strong>{{ s.estimation_valeur_poulet | number:'1.0-0' }} Ar</strong></td>
+              <td>{{ s.nombre_initial }} → <strong>{{ s.poulets_vivants }}</strong></td>
+              <td>
+                <span class="badge bg-danger" *ngIf="s.total_morts > 0">{{ s.total_morts }}</span>
+                <span *ngIf="s.total_morts === 0" class="small-muted">0</span>
+              </td>
+              <td>
+                <span class="badge bg-info text-dark" *ngIf="s.stock_oeufs > 0">{{ s.stock_oeufs }}</span>
+                <span *ngIf="s.stock_oeufs === 0" class="small-muted">0</span>
+              </td>
+              <td>{{ s.age_entree }} → <strong>{{ s.semaine_actuelle }}</strong></td>
+              <td><strong>{{ s.poids_moyen }} g</strong></td>
+              <td class="text-danger">{{ getCoutNourriture(s) | number:'1.0-0' }} Ar</td>
+              <td class="text-info">{{ s.estimation_valeur_oeufs | number:'1.0-0' }} Ar</td>
+              <td [ngClass]="{'text-success': getBenefice(s) >= 0, 'text-danger': getBenefice(s) < 0}"><strong>{{ getBenefice(s) | number:'1.0-0' }} Ar</strong></td>
+            </tr>
+            <tr *ngIf="stockList.length === 0">
+              <td colspan="12" class="empty-state"><i class="bi bi-inbox"></i>Aucun lot pour cette date</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-info alert-custom mt-3">
+    <i class="bi bi-info-circle me-1"></i>
+    <strong>Note :</strong> Estimations basées sur les prix configurés. Les résultats réels peuvent varier.
+  </div>
+</div>

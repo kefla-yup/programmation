@@ -1,0 +1,96 @@
+<div class="fade-in">
+  <div class="page-header">
+    <h4><i class="bi bi-egg"></i>Entrée Oeufs</h4>
+    <button class="btn btn-primary" (click)="showForm = !showForm">
+      <i class="bi bi-plus-lg"></i><span class="d-none d-sm-inline">Ajouter</span>
+    </button>
+  </div>
+
+  <!-- Stock oeufs - Stats Cards -->
+  <div class="row mb-3 stats-row">
+    <div class="col-6 col-md-3" *ngFor="let s of stockOeufs">
+      <div class="card stats-card blue">
+        <div class="stat-icon"><i class="bi bi-egg"></i></div>
+        <div class="stat-value">{{ s.stock_disponible }}</div>
+        <div class="stat-label">{{ s.race_nom }} — oeufs dispo</div>
+        <small class="small-muted">Reçus: {{ s.total_recus }} | Transfo: {{ s.total_transformes }}</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulaire -->
+  <div class="card mb-3" *ngIf="showForm">
+    <div class="card-header header-primary">Nouvelle Entrée</div>
+    <div class="card-body">
+      <form (ngSubmit)="add()">
+        <div class="row g-3">
+          <div class="col-12 col-md-3">
+            <label class="form-label">Date Réception</label>
+            <input type="date" class="form-control" [(ngModel)]="form.date_reception" name="date_reception" required>
+          </div>
+          <div class="col-12 col-md-3">
+            <label class="form-label">Race</label>
+            <select class="form-select" [(ngModel)]="form.race_id" name="race_id" required>
+              <option *ngFor="let r of races" [ngValue]="r.id">{{ r.nom }}</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label">Nombre d'oeufs</label>
+            <input type="number" class="form-control" [(ngModel)]="form.nombre" name="nombre" min="1" required>
+          </div>
+          <div class="col-6 col-md-3 d-flex align-items-end gap-2">
+            <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i></button>
+            <button type="button" class="btn btn-secondary" (click)="showForm = false"><i class="bi bi-x-lg"></i></button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tableau -->
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Race</th>
+              <th>Nombre</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let oeuf of oeufsList">
+              <tr *ngIf="editing !== oeuf.id">
+                <td>{{ oeuf.date_reception | date:'dd/MM/yyyy':'UTC' }}</td>
+                <td><span class="badge bg-primary">{{ oeuf.race_nom }}</span></td>
+                <td><strong>{{ oeuf.nombre }}</strong></td>
+                <td>
+                  <button class="btn btn-outline-warning btn-sm me-1" (click)="edit(oeuf)"><i class="bi bi-pencil"></i></button>
+                  <button class="btn btn-outline-danger btn-sm" (click)="remove(oeuf.id)"><i class="bi bi-trash"></i></button>
+                </td>
+              </tr>
+              <tr *ngIf="editing === oeuf.id" class="table-warning">
+                <td><input type="date" class="form-control form-control-sm" [(ngModel)]="editForm.date_reception"></td>
+                <td>
+                  <select class="form-select form-select-sm" [(ngModel)]="editForm.race_id">
+                    <option *ngFor="let r of races" [ngValue]="r.id">{{ r.nom }}</option>
+                  </select>
+                </td>
+                <td><input type="number" class="form-control form-control-sm" [(ngModel)]="editForm.nombre" min="1"></td>
+                <td>
+                  <button class="btn btn-success btn-sm me-1" (click)="saveEdit(oeuf.id)"><i class="bi bi-check-lg"></i></button>
+                  <button class="btn btn-secondary btn-sm" (click)="cancelEdit()"><i class="bi bi-x-lg"></i></button>
+                </td>
+              </tr>
+            </ng-container>
+            <tr *ngIf="oeufsList.length === 0">
+              <td colspan="4" class="empty-state"><i class="bi bi-inbox"></i>Aucune entrée d'oeufs</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

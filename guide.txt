@@ -1,0 +1,157 @@
+Poulet/
+├── docker-compose.yml          # Config Docker SQL Server
+├── backend/
+│   ├── package.json
+│   ├── server.js               # Serveur Express (sert l'API + le frontend buildé)
+│   ├── init-db.sql             # Script SQL (tables + données initiales)
+│   ├── init-db-runner.js       # Runner d'initialisation DB
+│   ├── config/
+│   │   └── db.js               # Configuration connexion SQL Server
+│   └── routes/
+│       ├── races.js            # CRUD races
+│       ├── configPoids.js      # Config poids par semaine/race
+│       ├── configPrix.js       # Config prix achat/vente/oeuf
+│       ├── lots.js             # Entrée de poulets (lots)
+│       ├── oeufs.js            # Entrée d'oeufs + stock
+│       ├── transformation.js   # Oeuf → Poulet (lot auto)
+│       ├── mortalite.js        # Suivi mortalité
+│       └── stock.js            # Vue stock avec calculs auto
+├── frontend/                   # Angular 21 (TypeScript)
+│   ├── angular.json            # Config Angular CLI
+│   ├── package.json            # Dépendances Angular
+│   ├── tsconfig.json           # Config TypeScript
+│   ├── proxy.conf.json         # Proxy /api → localhost:3000 (dev)
+│   ├── public/
+│   │   └── libs/               # Bootstrap CSS/JS offline
+│   └── src/
+│       ├── index.html          # Page HTML principale
+│       ├── main.ts             # Point d'entrée Angular
+│       └── app/
+│           ├── app.ts          # Composant racine
+│           ├── app.html        # Template racine (layout)
+│           ├── app.config.ts   # Configuration Angular
+│           ├── models/
+│           │   └── models.ts   # Interfaces TypeScript
+│           ├── services/
+│           │   ├── api.service.ts      # Service HTTP (appels API)
+│           │   └── message.service.ts  # Notifications toast
+│           └── components/
+│               ├── sidebar/            # Barre latérale navigation
+│               ├── config-poids/       # Config poids par semaine
+│               ├── config-prix/        # Config prix achat/vente
+│               ├── lots/               # Gestion des lots
+│               ├── oeufs/              # Entrée d'oeufs + stock
+│               ├── transformation/     # Oeuf → Poulet
+│               ├── mortalite/          # Suivi mortalité
+│               └── stock/              # Vue stock + calculs
+
+
+================================================================================
+  GUIDE - ELEVAGE POULET INDUSTRIEL
+================================================================================
+
+
+================================================================================
+  1. DEMARRER LE SITE (Production - localhost:3000)
+================================================================================
+
+  a) Builder le frontend Angular :
+
+     cd /home/think/Documents/S4/Prog_S4/Tahina/Poulet/frontend
+     ng build
+
+  b) Démarrer le serveur backend :
+
+     cd /home/think/Documents/S4/Prog_S4/Tahina/Poulet/backend
+     node server.js
+
+  → Ouvrir http://localhost:3000 dans le navigateur
+
+
+================================================================================
+  2. DEMARRER LE SITE (Développement - localhost:4200)
+================================================================================
+
+  a) Démarrer le backend dans un terminal :
+
+     cd /home/think/Documents/S4/Prog_S4/Poulet/backend
+     node server.js
+
+  b) Démarrer Angular en mode dev dans un autre terminal :
+
+     cd /home/think/Documents/S4/Prog_S4/Poulet/frontend
+     ng serve
+
+  → Ouvrir http://localhost:4200 dans le navigateur
+  → Les modifications du code sont appliquées automatiquement (hot reload)
+  → Le proxy redirige /api vers localhost:3000
+
+
+================================================================================
+  3. ARRETER LE SITE
+================================================================================
+
+  Dans le terminal où tourne le serveur, appuyer sur :
+
+  Ctrl + C
+
+
+================================================================================
+  3. REGARDER LES TABLES DANS SQL SERVER
+================================================================================
+
+  a) Se connecter au SQL Server dans Docker :
+
+     sudo docker exec -it sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P "Itiela123!" -No
+
+  b) Sélectionner la base de données :
+
+     USE poulet_db;
+     GO
+
+  c) Voir la liste des tables :
+
+     SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE';
+     GO
+
+  d) Voir le contenu d'une table (exemples) :
+
+     SELECT * FROM race;
+     GO
+
+     SELECT * FROM config_poids;
+     GO
+
+     SELECT * FROM config_prix;
+     GO
+
+     SELECT * FROM lot;
+     GO
+
+     SELECT * FROM oeuf;
+     GO
+
+     SELECT * FROM transformation;
+     GO
+
+     SELECT * FROM mortalite;
+     GO
+
+  e) Voir la structure d'une table (colonnes) :
+
+     EXEC sp_columns 'lot';
+     GO
+
+  f) Quitter sqlcmd :
+
+     EXIT
+
+
+================================================================================
+  4. REINITIALISER LA BASE DE DONNEES
+================================================================================
+
+  cd /home/think/Documents/S4/Prog_S4/Poulet/backend
+  node init-db-runner.js
+
+
