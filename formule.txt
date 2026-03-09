@@ -1,0 +1,145 @@
+============================================================
+         FORMULES DE CALCUL — VUE STOCK
+============================================================
+
+Variables de base (depuis la BDD):
+  - config_poids  : semaine, poids_cumule (=gain hebdo), variation, nourriture_jour
+  - config_prix   : prix_achat_gramme, prix_vente_gramme, prix_nourriture_gramme, prix_oeuf
+  - lot           : nombre, date_entree, race_id, age_entree_semaine, poids_initial, source
+  - mortalite     : lot_id, date_mortalite, nombre
+  - oeuf          : race_id, nombre
+  - transformation: race_id, oeufs_transformes
+
+============================================================
+1. SEMAINE (semaine_actuelle)
+============================================================
+  jours_ecoules    = date_consultation - date_entree  (en jours)
+  semaines_ecoulees = CEIL(jours_ecoules / 7)         si jours > 0, sinon 0
+  semaine_reelle   = age_entree_semaine + semaines_ecoulees
+  semaine_actuelle = MIN(semaine_reelle, max_semaine_config)
+
+  → Plafonnée à la dernière semaine configurée dans config_poids
+
+
+============================================================
+2. POIDS MOYEN (poids_moyen)
+============================================================
+  Étape 1 — Construire le poids cumulé réel :
+    poids_cumule dans la BDD = gain de la semaine (pas le poids total)
+    poids_reel(Sn) = SUM(poids_cumule de S0 à Sn)
+
+  Étape 2 — Interpolation linéaire :
+    semaine_fractionnelle = jours_ecoules / 7
+    semaine_reelle        = age_entree_semaine + semaine_fractionnelle
+
+    Si semaine_reelle <= max_semaine_config :
+      semaine_basse  = FLOOR(semaine_fractionnelle) + age_entree_semaine
+      semaine_haute  = semaine_basse + 1
+      fraction       = semaine_fractionnelle - FLOOR(semaine_fractionnelle)
+      poids_moyen    = poids_reel(semaine_basse) + (poids_reel(semaine_haute) - poids_reel(semaine_basse)) × fraction
+
+    Sinon (au-delà de la config) :
+      poids_moyen = poids_reel(max_semaine_config)
+
+
+============================================================
+3. MORT (total_morts)
+============================================================
+  total_morts = SUM(mortalite.nombre)
+                WHERE lot_id = lot.id
+                AND date_mortalite <= date_consultation
+
+
+============================================================
+4. NOMBRE POULET (poulets_vivants)
+============================================================
+  poulets_vivants = lot.nombre - total_morts
+
+
+============================================================
+5. NOMBRE D'OEUF (stock_oeufs)
+============================================================
+  stock_oeufs = SUM(oeuf.nombre pour la race)
+              - SUM(transformation.oeufs_transformes pour la race)
+
+
+============================================================
+6. PRIX ACHAT (prix_achat_lot)
+============================================================
+  Si source = 'transformation' :
+    prix_achat_lot = 0
+
+  Si poids_initial > 0 :
+    prix_achat_lot = prix_achat_gramme × poids_initial × nombre
+
+  Si poids_initial = 0 (poussins) :
+    prix_achat_lot = prix_achat_gramme × nombre
+
+
+============================================================
+7. PRIX DE VENTE — Estimation (estimation_valeur_poulet)
+============================================================
+  estimation_valeur_poulet = poulets_vivants × poids_moyen × prix_vente_gramme
+
+
+============================================================
+8. PRIX NOURRITURE (cout_nourriture)
+============================================================
+  Nourriture par poulet par jour = variation / 7
+  (variation = config_poids.variation de la semaine courante)
+  S0 = pas de nourriture
+
+  --- Nourriture total (cumulé depuis l'entrée) ---
+  Pour chaque jour j de 1 à jours_ecoules :
+    semaine_du_jour = MIN(CEIL(j / 7) + age_entree_semaine, max_semaine_config)
+    si semaine_du_jour = 0 → pas de nourriture
+    vivants_ce_jour = nombre - SUM(mortalite.nombre WHERE date_mortalite <= date_entree + j jours)
+    nourriture_jour_j = (variation_semaine / 7) × vivants_ce_jour
+
+  nourriture_total_grammes = SUM(nourriture_jour_j pour j=1 à jours_ecoules)
+  cout_nourriture_total    = nourriture_total_grammes × prix_nourriture_gramme
+
+  --- Nourriture par période (snapshot) ---
+  nourriture_jour_actuel   = (variation_semaine_courante / 7) × poulets_vivants
+  cout_nourriture_jour     = nourriture_jour_actuel × prix_nourriture_gramme
+  cout_nourriture_semaine  = cout_nourriture_jour × 7
+  cout_nourriture_mois     = cout_nourriture_jour × 30
+
+
+============================================================
+9. EST. PRIX OEUF (estimation_valeur_oeufs)
+============================================================
+  estimation_valeur_oeufs = stock_oeufs × prix_oeuf
+
+
+============================================================
+10. BÉNÉFICES (benefice)
+============================================================
+  CA = poulets_vivants × poids_moyen × prix_vente_gramme
+     (= valeur marchande si on vendait tout aujourd'hui)
+
+  benefice_total   = CA - depenses_total
+  benefice_jour    = CA - depenses_jour
+  benefice_semaine = CA - depenses_semaine
+  benefice_mois    = CA - depenses_mois
+
+  Avec :
+  depenses_total   = prix_achat_lot + cout_nourriture_total
+  depenses_jour    = prix_achat_lot + cout_nourriture_jour
+  depenses_semaine = prix_achat_lot + cout_nourriture_semaine
+  depenses_mois    = prix_achat_lot + cout_nourriture_mois
+
+
+============================================================
+RÉSUMÉ RAPIDE
+============================================================
+  Semaine       = age_entree + CEIL(jours / 7)         [plafonné]
+  Poids Moy     = interpolation linéaire du cumul des gains
+  Mort          = SUM(mortalité jusqu'à date)
+  Nb Poulet     = nombre_initial - morts
+  Nb Oeuf       = oeufs_reçus - oeufs_transformés
+  Prix Achat    = prix_achat_gramme × poids_initial × nombre   (ou ×nombre si poussin)
+  Prix Vente    = vivants × poids_moyen × prix_vente_gramme
+  Nourriture    = Σ(variation/7 × vivants_du_jour) × prix_nourriture_gramme
+  Est. Oeuf     = stock_oeufs × prix_oeuf
+  Bénéfice      = Prix_Vente - (Prix_Achat + Nourriture)
