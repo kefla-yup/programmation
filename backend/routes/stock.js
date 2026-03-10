@@ -220,18 +220,17 @@ router.get('/', async (req, res) => {
             const prixVenteGramme = configPrix ? parseFloat(configPrix.prix_vente_gramme) : 0;
             const ca = pouletsVivants * poidsMoyenExact * prixVenteGramme;
 
-            // Dépenses = coût nourriture par période
-            const depensesJour = coutNourritureJour;
-            const depensesSemaine = coutNourritureSemaine;
-            const depensesMois = coutNourritureMois;
-            const depensesTotal = coutNourritureTotal;
+            // Dépenses = prix achat + coût nourriture par période
+            const depensesJour = prixAchatLot + coutNourritureJour;
+            const depensesSemaine = prixAchatLot + coutNourritureSemaine;
+            const depensesMois = prixAchatLot + coutNourritureMois;
+            const depensesTotal = prixAchatLot + coutNourritureTotal;
 
-            // Bénéfice = CA (valeur marché) - prix d'achat - dépenses nourriture
-            // CA et prix d'achat sont des valeurs snapshot, seules les dépenses varient par période
-            const beneficeJour = ca - prixAchatLot - depensesJour;
-            const beneficeSemaine = ca - prixAchatLot - depensesSemaine;
-            const beneficeMois = ca - prixAchatLot - depensesMois;
-            const beneficeTotal = ca - prixAchatLot - depensesTotal;
+            // Bénéfice = CA (valeur marché) - dépenses totales (prix achat + nourriture)
+            const beneficeJour = ca - depensesJour;
+            const beneficeSemaine = ca - depensesSemaine;
+            const beneficeMois = ca - depensesMois;
+            const beneficeTotal = ca - depensesTotal;
 
             stockData.push({
                 lot_id: lot.id,

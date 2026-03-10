@@ -68,6 +68,7 @@
               <th>Semaine</th>
               <th>Poids Moy</th>
               <th>Prix Nourriture ({{ getPeriodeLabel() }})</th>
+              <th>Dépenses ({{ getPeriodeLabel() }})</th>
               <th>Est. Prix Oeuf</th>
               <th>Bénéfices ({{ getPeriodeLabel() }})</th>
             </tr>
@@ -93,11 +94,12 @@
               <td>{{ s.age_entree }} → <strong>{{ s.semaine_actuelle }}</strong></td>
               <td><strong>{{ s.poids_moyen }} g</strong></td>
               <td class="text-danger">{{ getCoutNourriture(s) | number:'1.0-0' }} Ar</td>
+              <td class="text-warning">{{ getDepenses(s) | number:'1.0-0' }} Ar</td>
               <td class="text-info">{{ s.estimation_valeur_oeufs | number:'1.0-0' }} Ar</td>
               <td [ngClass]="{'text-success': getBenefice(s) >= 0, 'text-danger': getBenefice(s) < 0}"><strong>{{ getBenefice(s) | number:'1.0-0' }} Ar</strong></td>
             </tr>
             <tr *ngIf="stockList.length === 0">
-              <td colspan="12" class="empty-state"><i class="bi bi-inbox"></i>Aucun lot pour cette date</td>
+              <td colspan="13" class="empty-state"><i class="bi bi-inbox"></i>Aucun lot pour cette date</td>
             </tr>
           </tbody>
         </table>
