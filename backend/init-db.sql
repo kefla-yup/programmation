@@ -125,117 +125,100 @@ GO
 -- ============================================================
 -- DONNÉES INITIALES: races
 -- ============================================================
-IF NOT EXISTS (SELECT * FROM race WHERE nom = 'R1')
+IF NOT EXISTS (SELECT * FROM race WHERE nom = 'Borbonèze')
 BEGIN
-    SET IDENTITY_INSERT race ON;
-    INSERT INTO race (id, nom) VALUES (1, 'R1');
-    SET IDENTITY_INSERT race OFF;
-END
-IF NOT EXISTS (SELECT * FROM race WHERE nom = 'R2')
-BEGIN
-    SET IDENTITY_INSERT race ON;
-    INSERT INTO race (id, nom) VALUES (2, 'R2');
-    SET IDENTITY_INSERT race OFF;
-END
-IF NOT EXISTS (SELECT * FROM race WHERE nom = 'Voay')
-BEGIN
-    SET IDENTITY_INSERT race ON;
-    INSERT INTO race (id, nom) VALUES (1002, 'Voay');
-    SET IDENTITY_INSERT race OFF;
-END
-IF NOT EXISTS (SELECT * FROM race WHERE nom = 'BA')
-BEGIN
-    SET IDENTITY_INSERT race ON;
-    INSERT INTO race (id, nom) VALUES (2002, 'BA');
-    SET IDENTITY_INSERT race OFF;
+    INSERT INTO race (nom) VALUES ('Borbonèze');
 END
 GO
 
 -- ============================================================
--- DONNÉES INITIALES: config_poids pour BA
+-- DONNÉES INITIALES: config_poids pour Borbonèze
 -- ============================================================
-DECLARE @ba_id INT = (SELECT id FROM race WHERE nom = 'BA');
+DECLARE @borbo_id INT = (SELECT id FROM race WHERE nom = 'Borbonèze');
 
-IF NOT EXISTS (SELECT * FROM config_poids WHERE race_id = @ba_id AND semaine = 0)
+IF NOT EXISTS (SELECT * FROM config_poids WHERE race_id = @borbo_id AND semaine = 0)
 BEGIN
     INSERT INTO config_poids (race_id, semaine, poids_cumule, variation, nourriture_jour) VALUES
-    (@ba_id, 0, 150, NULL, 0),
-    (@ba_id, 1, 10, 70, 1.43),
-    (@ba_id, 2, 20, 70, 2.86),
-    (@ba_id, 3, 30, 70, 4.29);
+    (@borbo_id, 0,  50,  NULL, 0),
+    (@borbo_id, 1,  20,  75,   10.71),
+    (@borbo_id, 2,  25,  80,   11.43),
+    (@borbo_id, 3,  30,  100,  14.29),
+    (@borbo_id, 4,  40,  150,  21.43),
+    (@borbo_id, 5,  80,  170,  24.29),
+    (@borbo_id, 6,  85,  190,  27.14),
+    (@borbo_id, 7,  100, 200,  28.57),
+    (@borbo_id, 8,  100, 250,  35.71),
+    (@borbo_id, 9,  90,  270,  38.57),
+    (@borbo_id, 10, 140, 290,  41.43),
+    (@borbo_id, 11, 200, 300,  42.86),
+    (@borbo_id, 12, 220, 370,  52.86),
+    (@borbo_id, 13, 265, 390,  55.71),
+    (@borbo_id, 14, 285, 350,  50.00),
+    (@borbo_id, 15, 300, 300,  42.86),
+    (@borbo_id, 16, 350, 450,  64.29),
+    (@borbo_id, 17, 400, 500,  71.43),
+    (@borbo_id, 18, 420, 400,  57.14),
+    (@borbo_id, 19, 430, 500,  71.43),
+    (@borbo_id, 20, 500, 500,  71.43),
+    (@borbo_id, 21, 530, 650,  92.86),
+    (@borbo_id, 22, 600, 600,  85.71),
+    (@borbo_id, 23, 400, 750,  107.14),
+    (@borbo_id, 24, 100, 750,  107.14),
+    (@borbo_id, 25, 0,   600,  85.71);
 END
 GO
 
 -- ============================================================
--- DONNÉES INITIALES: config_prix pour BA
+-- DONNÉES INITIALES: config_prix pour Borbonèze
 -- ============================================================
-DECLARE @ba INT = (SELECT id FROM race WHERE nom = 'BA');
+DECLARE @borbo_prix INT = (SELECT id FROM race WHERE nom = 'Borbonèze');
 
-IF NOT EXISTS (SELECT * FROM config_prix WHERE race_id = @ba)
+IF NOT EXISTS (SELECT * FROM config_prix WHERE race_id = @borbo_prix)
 BEGIN
     INSERT INTO config_prix (race_id, prix_achat_gramme, prix_vente_gramme, prix_nourriture_gramme, prix_oeuf)
-    VALUES (@ba, 100, 120, 100, 500);
+    VALUES (@borbo_prix, 500, 15, 5, 500);
 END
 GO
 
 -- ============================================================
 -- DONNÉES INITIALES: lots
 -- ============================================================
-DECLARE @ba_race INT = (SELECT id FROM race WHERE nom = 'BA');
+DECLARE @borbo_lot INT = (SELECT id FROM race WHERE nom = 'Borbonèze');
 
-IF NOT EXISTS (SELECT * FROM lot WHERE nom = 'Lot 2')
+IF NOT EXISTS (SELECT * FROM lot WHERE nom = 'Lot 1')
 BEGIN
     INSERT INTO lot (nom, date_entree, nombre, race_id, age_entree_semaine, poids_initial, source)
-    VALUES ('Lot 2', '2023-03-01', 100, @ba_race, 0, 150.00, 'direct');
-END
-
-IF NOT EXISTS (SELECT * FROM lot WHERE nom = 'Lot-Transfo-BA-2023-03-09')
-BEGIN
-    INSERT INTO lot (nom, date_entree, nombre, race_id, age_entree_semaine, poids_initial, source)
-    VALUES ('Lot-Transfo-BA-2023-03-09', '2023-03-09', 30, @ba_race, 0, 150.00, 'transformation');
+    VALUES ('Lot 1', '2026-01-01', 500, @borbo_lot, 0, 50.00, 'direct');
 END
 GO
 
 -- ============================================================
 -- DONNÉES INITIALES: mortalite
 -- ============================================================
-DECLARE @lot2_id INT = (SELECT id FROM lot WHERE nom = 'Lot 2');
+DECLARE @lot1_id INT = (SELECT id FROM lot WHERE nom = 'Lot 1');
 
-IF NOT EXISTS (SELECT * FROM mortalite WHERE lot_id = @lot2_id AND date_mortalite = '2023-03-10')
+IF NOT EXISTS (SELECT * FROM mortalite WHERE lot_id = @lot1_id AND date_mortalite = '2026-02-01')
 BEGIN
     INSERT INTO mortalite (lot_id, date_mortalite, nombre)
-    VALUES (@lot2_id, '2023-03-10', 20);
-END
-
-IF NOT EXISTS (SELECT * FROM mortalite WHERE lot_id = @lot2_id AND date_mortalite = '2023-03-18')
-BEGIN
-    INSERT INTO mortalite (lot_id, date_mortalite, nombre)
-    VALUES (@lot2_id, '2023-03-18', 10);
+    VALUES (@lot1_id, '2026-02-01', 15);
 END
 GO
 
 -- ============================================================
 -- DONNÉES INITIALES: oeufs
 -- ============================================================
-DECLARE @ba_oeuf INT = (SELECT id FROM race WHERE nom = 'BA');
+DECLARE @borbo_oeuf INT = (SELECT id FROM race WHERE nom = 'Borbonèze');
 
-IF NOT EXISTS (SELECT * FROM oeuf WHERE date_reception = '2023-03-09' AND race_id = @ba_oeuf)
+IF NOT EXISTS (SELECT * FROM oeuf WHERE date_reception = '2026-02-02' AND race_id = @borbo_oeuf)
 BEGIN
     INSERT INTO oeuf (date_reception, race_id, nombre)
-    VALUES ('2023-03-09', @ba_oeuf, 50);
+    VALUES ('2026-02-02', @borbo_oeuf, 100);
 END
-GO
 
--- ============================================================
--- DONNÉES INITIALES: transformation
--- ============================================================
-DECLARE @ba_transfo INT = (SELECT id FROM race WHERE nom = 'BA');
-DECLARE @lot_transfo INT = (SELECT id FROM lot WHERE nom = 'Lot-Transfo-BA-2023-03-09');
-
-IF NOT EXISTS (SELECT * FROM transformation WHERE date_transformation = '2023-03-09' AND race_id = @ba_transfo)
+IF NOT EXISTS (SELECT * FROM oeuf WHERE date_reception = '2026-02-15' AND race_id = @borbo_oeuf)
 BEGIN
-    INSERT INTO transformation (date_transformation, race_id, oeufs_transformes, nouveaux_poussins, lot_id)
-    VALUES ('2023-03-09', @ba_transfo, 30, 30, @lot_transfo);
+    INSERT INTO oeuf (date_reception, race_id, nombre)
+    VALUES ('2026-02-15', @borbo_oeuf, 150);
 END
 GO
 
