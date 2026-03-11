@@ -92,7 +92,7 @@
                 <span *ngIf="s.stock_oeufs === 0" class="small-muted">0</span>
               </td>
               <td>{{ s.age_entree }} → <strong>{{ s.semaine_actuelle }}</strong></td>
-              <td><strong>{{ s.poids_moyen }} g</strong></td>
+              <td><strong>{{ s.poids_moyen | number:'1.0-3' }} g</strong></td>
               <td class="text-danger">{{ getCoutNourriture(s) | number:'1.0-2' }} Ar</td>
               <td class="text-warning">{{ getDepenses(s) | number:'1.0-2' }} Ar</td>
               <td class="text-info">{{ s.estimation_valeur_oeufs | number:'1.0-2' }} Ar</td>
