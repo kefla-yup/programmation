@@ -2,7 +2,7 @@ const sql = require('mssql');
 
 const dbConfig = {
     user: 'SA',
-    password: 'Itiela123!',
+    password: 'Sqlserver1!',
     server: 'localhost',
     port: 1433,
     database: 'poulet_db',
