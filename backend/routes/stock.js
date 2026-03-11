@@ -118,10 +118,11 @@ router.get('/', async (req, res) => {
                 return variation / 7;
             }
 
-            const currentConfigWeek = diffJours <= 0
+            // S0 = premier jour de S1, donc nourriture commence dès le jour d'entrée
+            const currentConfigWeek = diffJours < 0
                 ? lot.age_entree_semaine
-                : Math.min(Math.ceil(diffJours / 7) + lot.age_entree_semaine, maxSemaineConfig);
-            const nourritureJourParPouletExact = currentConfigWeek === 0 ? 0 : getNourritureJourConfig(currentConfigWeek);
+                : Math.min(Math.floor(diffJours / 7) + 1 + lot.age_entree_semaine, maxSemaineConfig);
+            const nourritureJourParPouletExact = getNourritureJourConfig(currentConfigWeek);
 
             const nourritureJour = nourritureJourParPouletExact * pouletsVivants;
             const nourritureSemaine = nourritureJour * 7;
@@ -140,11 +141,10 @@ router.get('/', async (req, res) => {
             const mortalitesDetail = mortalitesDetailResult.recordset;
 
             // Calculer nourriture totale consommée jour par jour en tenant compte de la mortalité
+            // S0 = premier jour de S1, nourriture dès le jour d'entrée (j=0)
             let nourritureTotal = 0;
-            for (let j = 1; j <= diffJours; j++) {
-                const weekForDay = Math.min(Math.ceil(j / 7) + lot.age_entree_semaine, maxSemaineConfig);
-                // S0 = pas de nourriture
-                if (weekForDay === 0) continue;
+            for (let j = 0; j < diffJours; j++) {
+                const weekForDay = Math.min(Math.floor(j / 7) + 1 + lot.age_entree_semaine, maxSemaineConfig);
 
                 // Calculer le nombre de poulets vivants ce jour-là
                 const jourDate = new Date(dateEntree);

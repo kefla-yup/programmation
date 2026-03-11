@@ -26,3 +26,5 @@ pkill -f "node server.js" && sleep 2 && pkill -f "ng serve" && sleep 2
 
 ALTER LOGIN SA WITH PASSWORD = 'Sqlserver1!';
 GO
+
+
