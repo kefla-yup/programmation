@@ -92,7 +92,10 @@ router.get('/', async (req, res) => {
                 // Au-delà de la config : plafonner au dernier poids configuré
                 poidsMoyenExact = lastCumulatedWeight;
             }
-            poidsMoyen = Math.round(poidsMoyenExact * 100) / 100;
+            poidsMoyen = poidsMoyenExact;
+            
+            // Arrondir le poids à 2 décimales pour les calculs financiers
+            const poidsMoyenArrondi = Math.round(poidsMoyenExact * 100) / 100;
 
             // Récupérer total morts pour ce lot jusqu'à la date de consultation
             const mortsResult = await pool.request()
@@ -208,7 +211,7 @@ router.get('/', async (req, res) => {
             }
 
             const valeurVente = configPrix
-                ? pouletsVivants * poidsMoyenExact * parseFloat(configPrix.prix_vente_gramme)
+                ? pouletsVivants * poidsMoyenArrondi * parseFloat(configPrix.prix_vente_gramme)
                 : 0;
             const prixNourritureGramme = configPrix ? parseFloat(configPrix.prix_nourriture_gramme || 0) : 0;
             const coutNourritureJour = nourritureJour * prixNourritureGramme;
@@ -218,7 +221,7 @@ router.get('/', async (req, res) => {
 
             // Chiffre d'affaires = valeur marchande actuelle (snapshot: si on vendait tout aujourd'hui)
             const prixVenteGramme = configPrix ? parseFloat(configPrix.prix_vente_gramme) : 0;
-            const ca = pouletsVivants * poidsMoyenExact * prixVenteGramme;
+            const ca = pouletsVivants * poidsMoyenArrondi * prixVenteGramme;
 
             // Dépenses = prix achat + coût nourriture par période
             const depensesJour = prixAchatLot + coutNourritureJour;
@@ -250,26 +253,26 @@ router.get('/', async (req, res) => {
                 nourriture_semaine_g: Math.round(nourritureSemaine),
                 nourriture_mois_g: Math.round(nourritureMois),
                 nourriture_total_g: Math.round(nourritureTotal),
-                cout_nourriture_jour: Math.round(coutNourritureJour),
-                cout_nourriture_semaine: Math.round(coutNourritureSemaine),
-                cout_nourriture_mois: Math.round(coutNourritureMois),
-                cout_nourriture_total: Math.round(coutNourritureTotal),
-                prix_achat_lot: Math.round(prixAchatLot),
-                depenses_jour: Math.round(depensesJour),
-                depenses_semaine: Math.round(depensesSemaine),
-                depenses_mois: Math.round(depensesMois),
-                depenses_total: Math.round(depensesTotal),
-                valeur_vente: Math.round(valeurVente),
-                ca_jour: Math.round(ca),
-                ca_semaine: Math.round(ca),
-                ca_mois: Math.round(ca),
-                ca_total: Math.round(ca),
-                benefice_jour: Math.round(beneficeJour),
-                benefice_semaine: Math.round(beneficeSemaine),
-                benefice_mois: Math.round(beneficeMois),
-                benefice_total: Math.round(beneficeTotal),
-                estimation_valeur_poulet: Math.round(pouletsVivants * poidsMoyenExact * prixVenteGramme),
-                estimation_valeur_oeufs: Math.round(stockOeufs * (configPrix ? parseFloat(configPrix.prix_oeuf) : 0))
+                cout_nourriture_jour: coutNourritureJour,
+                cout_nourriture_semaine: coutNourritureSemaine,
+                cout_nourriture_mois: coutNourritureMois,
+                cout_nourriture_total: coutNourritureTotal,
+                prix_achat_lot: prixAchatLot,
+                depenses_jour: depensesJour,
+                depenses_semaine: depensesSemaine,
+                depenses_mois: depensesMois,
+                depenses_total: depensesTotal,
+                valeur_vente: valeurVente,
+                ca_jour: ca,
+                ca_semaine: ca,
+                ca_mois: ca,
+                ca_total: ca,
+                benefice_jour: beneficeJour,
+                benefice_semaine: beneficeSemaine,
+                benefice_mois: beneficeMois,
+                benefice_total: beneficeTotal,
+                estimation_valeur_poulet: pouletsVivants * poidsMoyenArrondi * prixVenteGramme,
+                estimation_valeur_oeufs: stockOeufs * (configPrix ? parseFloat(configPrix.prix_oeuf) : 0)
             });
         }
 

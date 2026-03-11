@@ -1,0 +1,61 @@
+<div class="fade-in">
+  <div class="page-header">
+    <h4><i class="bi bi-egg-fill"></i>Races</h4>
+    <button class="btn btn-primary" (click)="showForm = !showForm">
+      <i class="bi bi-plus-lg"></i><span class="d-none d-sm-inline">Ajouter</span>
+    </button>
+  </div>
+
+  <!-- Formulaire ajout -->
+  <div class="card mb-3" *ngIf="showForm">
+    <div class="card-header header-primary">Nouvelle Race</div>
+    <div class="card-body">
+      <form (ngSubmit)="add()">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="form-label">Nom de la race</label>
+            <input type="text" class="form-control" [(ngModel)]="form.nom" name="nom" placeholder="Ex: Brahma, Leghorn, Sussex..." required>
+          </div>
+          <div class="col-12 col-md-3 d-flex align-items-end gap-2">
+            <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i></button>
+            <button type="button" class="btn btn-secondary" (click)="showForm = false"><i class="bi bi-x-lg"></i></button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tableau des races -->
+  <div class="card">
+    <div class="card-header">
+      <span>{{ races.length }} race(s)</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0" *ngIf="races.length > 0">
+        <thead class="table-header">
+          <tr>
+            <th>ID</th>
+            <th>Nom</th>
+            <th class="text-end" style="width:100px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let race of races">
+            <td>{{ race.id }}</td>
+            <td>{{ race.nom }}</td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-danger" (click)="delete(race.id)" title="Supprimer">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Message vide -->
+  <div *ngIf="races.length === 0" class="alert alert-info mt-3">
+    <i class="bi bi-info-circle"></i> Aucune race enregistrée. Ajoutez votre première race pour commencer.
+  </div>
+</div>

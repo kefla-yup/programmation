@@ -4,14 +4,14 @@
     <button class="sidebar-toggle" (click)="toggleSidebar()"><i class="bi bi-list"></i></button>
     <div class="brand">
       <div class="brand-icon">🐔</div>
-      <span>Poulet Pro</span>
+      <span>INDUSTRY</span>
     </div>
   </div>
   <div class="nav-right">
-    <div class="user-pill">
+    <!-- <div class="user-pill">
       <div class="user-avatar">I</div>
       <span class="user-name">Itiela</span>
-    </div>
+    </div> -->
   </div>
 </header>
 
@@ -59,6 +59,7 @@
   <!-- Views -->
   <app-config-poids *ngIf="currentView === 'configPoids'"></app-config-poids>
   <app-config-prix *ngIf="currentView === 'configPrix'"></app-config-prix>
+  <app-races *ngIf="currentView === 'races'"></app-races>
   <app-lots *ngIf="currentView === 'lots'"></app-lots>
   <app-oeufs *ngIf="currentView === 'oeufs'"></app-oeufs>
   <app-transformation *ngIf="currentView === 'transformation'"></app-transformation>

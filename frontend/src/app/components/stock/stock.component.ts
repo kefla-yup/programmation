@@ -9,7 +9,8 @@ import { StockItem } from '../../models/models';
   selector: 'app-stock',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './stock.component.html'
+  templateUrl: './stock.component.html',
+  styleUrl: './stock.component.css'
 })
 export class StockComponent implements OnInit {
   stockList: StockItem[] = [];

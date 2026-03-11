@@ -116,7 +116,7 @@ Variables de base (depuis la BDD):
 10. BÉNÉFICES (benefice)
 ============================================================
   CA = poulets_vivants × poids_moyen × prix_vente_gramme
-     (= valeur marchande si on vendait tout aujourd'hui)
+     (= valeur marchande si on vendait tout wrmjbewqgfzwewgfkeaaujourd'hui)kdsugfdsgffiegizewfgeifgefgeqzfzefd
 
   benefice_total   = CA - depenses_total
   benefice_jour    = CA - depenses_jour

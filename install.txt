@@ -20,9 +20,9 @@ npm install -g @angular/cli
 # Vérifier
 ng version
 
-sudo docker exec -it sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P "Itiela123!" -No
+sudo docker exec -it sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P "Sqlserver1!" -No
 
-kill -9 $(lsof -t -i:3000)
- 
-node server.js
+pkill -f "node server.js" && sleep 2 && pkill -f "ng serve" && sleep 2
 
+ALTER LOGIN SA WITH PASSWORD = 'Sqlserver1!';
+GO

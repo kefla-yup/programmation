@@ -2,6 +2,9 @@
   <div class="sidebar-section">
     <div class="sidebar-label">Configuration</div>
     <ul class="sidebar-nav">
+      <li><a href="#" [class.active]="currentView === 'races'" (click)="setView('races'); $event.preventDefault()">
+        <i class="bi bi-egg-fill"></i><span>Races</span>
+      </a></li>
       <li><a href="#" [class.active]="currentView === 'configPoids'" (click)="setView('configPoids'); $event.preventDefault()">
         <i class="bi bi-speedometer2"></i><span>Poids</span>
       </a></li>

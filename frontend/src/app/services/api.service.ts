@@ -17,6 +17,14 @@ export class ApiService {
     return this.http.get<Race[]>(`${this.baseUrl}/races`);
   }
 
+  addRace(data: Partial<Race>): Observable<Race> {
+    return this.http.post<Race>(`${this.baseUrl}/races`, data);
+  }
+
+  deleteRace(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/races/${id}`);
+  }
+
   // Config Poids
   getConfigPoids(raceId?: number): Observable<ConfigPoids[]> {
     let url = `${this.baseUrl}/config-poids`;
