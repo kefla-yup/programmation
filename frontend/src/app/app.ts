@@ -9,6 +9,7 @@ import { OeufsComponent } from './components/oeufs/oeufs.component';
 import { TransformationComponent } from './components/transformation/transformation.component';
 import { MortaliteComponent } from './components/mortalite/mortalite.component';
 import { StockComponent } from './components/stock/stock.component';
+import { RacesComponent } from './components/races/races.component';
 
 @Component({
   selector: 'app-root',
@@ -22,7 +23,8 @@ import { StockComponent } from './components/stock/stock.component';
     OeufsComponent,
     TransformationComponent,
     MortaliteComponent,
-    StockComponent
+    StockComponent,
+    RacesComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css'
