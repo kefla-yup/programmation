@@ -1,0 +1,104 @@
+<div class="fade-in">
+  <div class="page-header">
+    <h4><i class="bi bi-calculator"></i>Calcul Poids Poulet</h4>
+  </div>
+
+  <!-- Formulaire -->
+  <div class="card mb-4">
+    <div class="card-header header-primary">Paramètres</div>
+    <div class="card-body">
+      <form (ngSubmit)="calculer()">
+        <div class="row g-3">
+          <div class="col-12 col-md-3">
+            <label class="form-label">Race</label>
+            <select class="form-select" [(ngModel)]="raceId" name="raceId" required>
+              <option [ngValue]="null" disabled>Choisir une race</option>
+              <option *ngFor="let r of races" [ngValue]="r.id">{{ r.nom }}</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label">Date début</label>
+            <input type="date" class="form-control" [(ngModel)]="dateDebut" name="dateDebut" required>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label">Date fin</label>
+            <input type="date" class="form-control" [(ngModel)]="dateFin" name="dateFin" required>
+          </div>
+          <div class="col-12 col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="bi bi-search me-1"></i>Calculer
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Résultat -->
+  <div class="card" *ngIf="resultat">
+    <div class="card-header header-primary">Résultat</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-6 col-lg-3">
+          <div class="card stats-card blue">
+            <div class="stat-icon"><i class="bi bi-egg-fill"></i></div>
+            <div class="stat-value">{{ resultat.race_nom }}</div>
+            <div class="stat-label">Race</div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="card stats-card orange">
+            <div class="stat-icon"><i class="bi bi-calendar-range"></i></div>
+            <div class="stat-value">{{ resultat.jours_ecoules }} j</div>
+            <div class="stat-label">Jours écoulés</div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="card stats-card blue">
+            <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
+            <div class="stat-value">{{ resultat.semaine }}</div>
+            <div class="stat-label">Semaine</div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="card stats-card green">
+            <div class="stat-icon"><i class="bi bi-speedometer2"></i></div>
+            <div class="stat-value">{{ resultat.poids_gramme | number:'1.0-3' }} g</div>
+            <div class="stat-label">Poids du poulet</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-responsive mt-3">
+        <table class="table table-bordered mb-0">
+          <tbody>
+            <tr>
+              <th class="table-light" style="width:40%;">Race</th>
+              <td>{{ resultat.race_nom }}</td>
+            </tr>
+            <tr>
+              <th class="table-light">Date début</th>
+              <td>{{ resultat.date_debut }}</td>
+            </tr>
+            <tr>
+              <th class="table-light">Date fin</th>
+              <td>{{ resultat.date_fin }}</td>
+            </tr>
+            <tr>
+              <th class="table-light">Jours écoulés</th>
+              <td>{{ resultat.jours_ecoules }} jours</td>
+            </tr>
+            <tr>
+              <th class="table-light">Semaine</th>
+              <td>{{ resultat.semaine }}</td>
+            </tr>
+            <tr>
+              <th class="table-light">Poids exact du poulet</th>
+              <td><strong class="text-success">{{ resultat.poids_gramme | number:'1.0-3' }} g</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

@@ -10,6 +10,7 @@ import { TransformationComponent } from './components/transformation/transformat
 import { MortaliteComponent } from './components/mortalite/mortalite.component';
 import { StockComponent } from './components/stock/stock.component';
 import { RacesComponent } from './components/races/races.component';
+import { PoidsPouletComponent } from './components/poids-poulet/poids-poulet.component';
 
 @Component({
   selector: 'app-root',
@@ -24,7 +25,8 @@ import { RacesComponent } from './components/races/races.component';
     TransformationComponent,
     MortaliteComponent,
     StockComponent,
-    RacesComponent
+    RacesComponent,
+    PoidsPouletComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css'

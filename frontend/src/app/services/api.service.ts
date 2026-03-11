@@ -123,6 +123,11 @@ export class ApiService {
     return this.http.delete<void>(`${this.baseUrl}/mortalite/${id}`);
   }
 
+  // Poids Poulet
+  getPoidsPoulet(raceId: number, dateDebut: string, dateFin: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/poids-poulet?race_id=${raceId}&date_debut=${dateDebut}&date_fin=${dateFin}`);
+  }
+
   // Stock
   getStock(date?: string): Observable<StockItem[]> {
     let url = `${this.baseUrl}/stock`;
