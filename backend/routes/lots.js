@@ -46,18 +46,17 @@ router.post('/', async (req, res) => {
         const { nom, date_entree, nombre, race_id, age_entree_semaine, source } = req.body;
         const pool = await getPool();
 
-        // Récupérer le poids initial depuis config_poids
+        // Récupérer le poids initial = somme cumulative de S0 à Sn
         const poidsResult = await pool.request()
             .input('race_id', sql.Int, race_id)
             .input('semaine', sql.Int, age_entree_semaine || 0)
             .query(`
-                SELECT poids_cumule FROM config_poids
-                WHERE race_id = @race_id AND semaine = @semaine
+                SELECT ISNULL(SUM(poids_cumule), 0) as poids_total
+                FROM config_poids
+                WHERE race_id = @race_id AND semaine <= @semaine
             `);
 
-        const poids_initial = poidsResult.recordset.length > 0
-            ? poidsResult.recordset[0].poids_cumule
-            : 0;
+        const poids_initial = poidsResult.recordset[0].poids_total;
 
         const result = await pool.request()
             .input('nom', sql.NVarChar, nom)
@@ -84,18 +83,17 @@ router.put('/:id', async (req, res) => {
         const { nom, date_entree, nombre, race_id, age_entree_semaine } = req.body;
         const pool = await getPool();
 
-        // Recalculer le poids initial
+        // Recalculer le poids initial = somme cumulative de S0 à Sn
         const poidsResult = await pool.request()
             .input('race_id', sql.Int, race_id)
             .input('semaine', sql.Int, age_entree_semaine || 0)
             .query(`
-                SELECT poids_cumule FROM config_poids
-                WHERE race_id = @race_id AND semaine = @semaine
+                SELECT ISNULL(SUM(poids_cumule), 0) as poids_total
+                FROM config_poids
+                WHERE race_id = @race_id AND semaine <= @semaine
             `);
 
-        const poids_initial = poidsResult.recordset.length > 0
-            ? poidsResult.recordset[0].poids_cumule
-            : 0;
+        const poids_initial = poidsResult.recordset[0].poids_total;
 
         const result = await pool.request()
             .input('id', sql.Int, req.params.id)
