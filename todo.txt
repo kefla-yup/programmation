@@ -1,0 +1,4 @@
+fonction getPoidsPoulet
+argument race, date debut, date fin
+
+ca donne le poids exacte du poulet 
