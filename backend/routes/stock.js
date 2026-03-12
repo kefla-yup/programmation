@@ -221,16 +221,21 @@ router.get('/', async (req, res) => {
             const configPrix = prixResult.recordset.length > 0 ? prixResult.recordset[0] : null;
 
             // Stock oeufs pour cette race (filtré par date de consultation)
-            const oeufsStockResult = await pool.request()
-                .input('race_oeufs_' + lot.id, sql.Int, lot.race_id)
-                .input('date_oeufs_' + lot.id, sql.Date, dateConsultation)
-                .query(`
-                    SELECT
-                        ISNULL((SELECT SUM(nombre) FROM oeuf WHERE race_id = @race_oeufs_${lot.id} AND date_reception <= @date_oeufs_${lot.id}), 0)
-                        - ISNULL((SELECT SUM(oeufs_transformes) FROM transformation WHERE race_id = @race_oeufs_${lot.id} AND date_transformation <= @date_oeufs_${lot.id}), 0)
-                        as stock_oeufs
-                `);
-            const stockOeufs = oeufsStockResult.recordset[0].stock_oeufs;
+            // Seuls les lots d'origine (source='direct') peuvent avoir des œufs
+            // Les lots créés par transformation (éclosion) ne peuvent pas avoir d'œufs
+            let stockOeufs = 0;
+            if (lot.source === 'direct') {
+                const oeufsStockResult = await pool.request()
+                    .input('race_oeufs_' + lot.id, sql.Int, lot.race_id)
+                    .input('date_oeufs_' + lot.id, sql.Date, dateConsultation)
+                    .query(`
+                        SELECT
+                            ISNULL((SELECT SUM(nombre) FROM oeuf WHERE race_id = @race_oeufs_${lot.id} AND date_reception <= @date_oeufs_${lot.id}), 0)
+                            - ISNULL((SELECT SUM(oeufs_transformes) FROM transformation WHERE race_id = @race_oeufs_${lot.id} AND date_transformation <= @date_oeufs_${lot.id}), 0)
+                            as stock_oeufs
+                    `);
+                stockOeufs = oeufsStockResult.recordset[0].stock_oeufs;
+            }
 
             // Poids à l'entrée (utiliser config cumulé si poids_initial du lot est 0)
             let poidsEntree;
