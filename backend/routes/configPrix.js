@@ -21,29 +21,31 @@ router.get('/', async (req, res) => {
 // POST ajouter/modifier config prix
 router.post('/', async (req, res) => {
     try {
-        const { race_id, prix_achat_gramme, prix_vente_gramme, prix_nourriture_gramme, prix_oeuf } = req.body;
+        const { race_id, prix_achat_tete, prix_vente_gramme, prix_nourriture_gramme, prix_oeuf, nb_jour_eclosion } = req.body;
         const pool = await getPool();
 
         // Upsert: update si existe, insert sinon
         const result = await pool.request()
             .input('race_id', sql.Int, race_id)
-            .input('prix_achat_gramme', sql.Decimal(10, 2), prix_achat_gramme)
+            .input('prix_achat_tete', sql.Decimal(10, 2), prix_achat_tete)
             .input('prix_vente_gramme', sql.Decimal(10, 2), prix_vente_gramme)
             .input('prix_nourriture_gramme', sql.Decimal(10, 2), prix_nourriture_gramme || 0)
             .input('prix_oeuf', sql.Decimal(10, 2), prix_oeuf || 0)
+            .input('nb_jour_eclosion', sql.Int, nb_jour_eclosion || 21)
             .query(`
                 MERGE config_prix AS target
                 USING (SELECT @race_id as race_id) AS source
                 ON target.race_id = source.race_id
                 WHEN MATCHED THEN
                     UPDATE SET
-                        prix_achat_gramme = @prix_achat_gramme,
+                        prix_achat_tete = @prix_achat_tete,
                         prix_vente_gramme = @prix_vente_gramme,
                         prix_nourriture_gramme = @prix_nourriture_gramme,
-                        prix_oeuf = @prix_oeuf
+                        prix_oeuf = @prix_oeuf,
+                        nb_jour_eclosion = @nb_jour_eclosion
                 WHEN NOT MATCHED THEN
-                    INSERT (race_id, prix_achat_gramme, prix_vente_gramme, prix_nourriture_gramme, prix_oeuf)
-                    VALUES (@race_id, @prix_achat_gramme, @prix_vente_gramme, @prix_nourriture_gramme, @prix_oeuf)
+                    INSERT (race_id, prix_achat_tete, prix_vente_gramme, prix_nourriture_gramme, prix_oeuf, nb_jour_eclosion)
+                    VALUES (@race_id, @prix_achat_tete, @prix_vente_gramme, @prix_nourriture_gramme, @prix_oeuf, @nb_jour_eclosion)
                 OUTPUT INSERTED.*;
             `);
         res.status(201).json(result.recordset[0]);
@@ -55,20 +57,22 @@ router.post('/', async (req, res) => {
 // PUT modifier config prix
 router.put('/:id', async (req, res) => {
     try {
-        const { prix_achat_gramme, prix_vente_gramme, prix_nourriture_gramme, prix_oeuf } = req.body;
+        const { prix_achat_tete, prix_vente_gramme, prix_nourriture_gramme, prix_oeuf, nb_jour_eclosion } = req.body;
         const pool = await getPool();
         const result = await pool.request()
             .input('id', sql.Int, req.params.id)
-            .input('prix_achat_gramme', sql.Decimal(10, 2), prix_achat_gramme)
+            .input('prix_achat_tete', sql.Decimal(10, 2), prix_achat_tete)
             .input('prix_vente_gramme', sql.Decimal(10, 2), prix_vente_gramme)
             .input('prix_nourriture_gramme', sql.Decimal(10, 2), prix_nourriture_gramme || 0)
             .input('prix_oeuf', sql.Decimal(10, 2), prix_oeuf || 0)
+            .input('nb_jour_eclosion', sql.Int, nb_jour_eclosion || 21)
             .query(`
                 UPDATE config_prix
-                SET prix_achat_gramme = @prix_achat_gramme,
+                SET prix_achat_tete = @prix_achat_tete,
                     prix_vente_gramme = @prix_vente_gramme,
                     prix_nourriture_gramme = @prix_nourriture_gramme,
-                    prix_oeuf = @prix_oeuf
+                    prix_oeuf = @prix_oeuf,
+                    nb_jour_eclosion = @nb_jour_eclosion
                 OUTPUT INSERTED.*
                 WHERE id = @id
             `);

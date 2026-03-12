@@ -17,10 +17,11 @@ export interface ConfigPrix {
   id: number;
   race_id: number;
   race_nom: string;
-  prix_achat_gramme: number;
+  prix_achat_tete: number;
   prix_vente_gramme: number;
   prix_nourriture_gramme: number;
   prix_oeuf: number;
+  nb_jour_eclosion: number;
 }
 
 export interface Lot {

@@ -64,16 +64,13 @@ Variables de base (depuis la BDD):
 
 
 ============================================================
-6. PRIX ACHAT (prix_achat_lot)
+6. PRIX ACHAT (prix_achat_lot) — par tête
 ============================================================
   Si source = 'transformation' :
     prix_achat_lot = 0
 
-  Si poids_initial > 0 :
-    prix_achat_lot = prix_achat_gramme × poids_initial × nombre
-
-  Si poids_initial = 0 (poussins) :
-    prix_achat_lot = prix_achat_gramme × nombre
+  Sinon :
+    prix_achat_lot = prix_achat_tete × nombre
 
 
 ============================================================

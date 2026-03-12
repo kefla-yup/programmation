@@ -1,3 +1,10 @@
-cree une fonction getPoidsPoulet et ces sont argument race, date debut, date fin
+si il y a un stock d'oeufs pour un lot :
+apres 30 jours les oeufs se transforme automatiquement en un nouveau lot
+tout les nouveaux lot ajouter sont par defaut femelle
 
-ca donne le poids exacte du poulet 
+dans race :
+-% des oeufs qui sont pas devenu poussins configuration (pourries)
+-% de male ou femelle apres les eclosions automatiquement des oeufs
+-capacite de pendaison par race
+
+colonne perte = valeurs des oeufs qui sont pas devenu poussins

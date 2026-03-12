@@ -46,10 +46,11 @@ BEGIN
     CREATE TABLE config_prix (
         id INT IDENTITY(1,1) PRIMARY KEY,
         race_id INT NOT NULL UNIQUE,
-        prix_achat_gramme DECIMAL(10,2) NOT NULL,
+        prix_achat_tete DECIMAL(10,2) NOT NULL,
         prix_vente_gramme DECIMAL(10,2) NOT NULL,
         prix_nourriture_gramme DECIMAL(10,2) NOT NULL DEFAULT 0,
         prix_oeuf DECIMAL(10,2) NOT NULL DEFAULT 0,
+        nb_jour_eclosion INT NOT NULL DEFAULT 21,
         FOREIGN KEY (race_id) REFERENCES race(id)
     );
 END
@@ -175,8 +176,8 @@ DECLARE @borbo_prix INT = (SELECT id FROM race WHERE nom = 'Borbonèze');
 
 IF NOT EXISTS (SELECT * FROM config_prix WHERE race_id = @borbo_prix)
 BEGIN
-    INSERT INTO config_prix (race_id, prix_achat_gramme, prix_vente_gramme, prix_nourriture_gramme, prix_oeuf)
-    VALUES (@borbo_prix, 500, 15, 5, 500);
+    INSERT INTO config_prix (race_id, prix_achat_tete, prix_vente_gramme, prix_nourriture_gramme, prix_oeuf, nb_jour_eclosion)
+    VALUES (@borbo_prix, 500, 15, 5, 500, 30);
 END
 GO
 
