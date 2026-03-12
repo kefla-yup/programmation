@@ -1,10 +1,33 @@
-si il y a un stock d'oeufs pour un lot :
-apres 30 jours les oeufs se transforme automatiquement en un nouveau lot
-tout les nouveaux lot ajouter sont par defaut femelle
+1. Gestion des lots
+- Tout nouveau lot créé est défini par défaut en femelle
 
-dans race :
--% des oeufs qui sont pas devenu poussins configuration (pourries)
--% de male ou femelle apres les eclosions automatiquement des oeufs
--capacite de pendaison par race
 
-colonne perte = valeurs des oeufs qui sont pas devenu poussins
+2. Transformation automatique des œufs
+Après 30 jours, un lot d'œufs se transforme automatiquement en un nouveau lot de poussins selon ce calcul :
+
+Exemple avec 1 000 œufs :
+
+| Étape | Calcul | Résultat |
+|
+| Œufs de départ | — | 1 000 |
+| Œufs pourris (30%) | 1 000 × 30% | 300 perdus |
+| Œufs éclos (70%) | 1 000 × 70% | 700 poussins |
+| → Mâles (30%) | 700 × 30% | 210 mâles |
+| → Femelles (70%) | 700 × 70% | 490 femelles |
+
+
+3. Colonne Pertes
+- Œufs pourris × prix unitaire = montant perdu en €
+
+
+4. Configuration par race
+Chaque race possède 3 paramètres configurables manuellement :
+
+| Paramètre | Description |
+|
+| Taux de perte | % d'œufs pourris/infertiles, configurable par race |
+| Ratio mâle / femelle | % de mâles obtenus après éclosion, configurable par race |
+| Capacité de ponte | Nombre max d'œufs qu'une poule peut produire, configurable par race |
+
+> Les pourcentages ne sont pas fixes — ils sont définis et modifiables dans la configuration de chaque race.
+
