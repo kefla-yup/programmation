@@ -51,8 +51,8 @@ BEGIN
         race_id INT NOT NULL UNIQUE,
         prix_achat_tete DECIMAL(10,2) NOT NULL,
         prix_vente_gramme DECIMAL(10,2) NOT NULL,
-        prix_nourriture_gramme DECIMAL(10,2) NOT NULL DEFAULT 0,
         prix_oeuf DECIMAL(10,2) NOT NULL DEFAULT 0,
+        prix_nourriture_gramme DECIMAL(10,2) NOT NULL DEFAULT 0,
         nb_jour_eclosion INT NOT NULL DEFAULT 21,
         FOREIGN KEY (race_id) REFERENCES race(id)
     );
@@ -72,7 +72,7 @@ BEGIN
         race_id INT NOT NULL,
         age_entree_semaine INT NOT NULL DEFAULT 0,
         poids_initial DECIMAL(10,2) NOT NULL DEFAULT 0,
-        source NVARCHAR(50) DEFAULT 'direct',
+        source NVARCHAR(50) NULL DEFAULT 'direct',
         sexe NVARCHAR(10) NOT NULL DEFAULT 'femelle',
         FOREIGN KEY (race_id) REFERENCES race(id)
     );
@@ -95,7 +95,7 @@ END
 GO
 
 -- ============================================================
--- TABLE: oeuf (entrée d'oeufs)
+-- TABLE: oeuf (entree d'oeufs)
 -- ============================================================
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='oeuf' AND xtype='U')
 BEGIN
@@ -110,7 +110,7 @@ END
 GO
 
 -- ============================================================
--- TABLE: transformation (oeuf → poulet)
+-- TABLE: transformation (oeuf -> poulet)
 -- ============================================================
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='transformation' AND xtype='U')
 BEGIN
@@ -119,9 +119,9 @@ BEGIN
         date_transformation DATE NOT NULL,
         race_id INT NOT NULL,
         oeufs_transformes INT NOT NULL,
-        oeufs_pourris INT NOT NULL DEFAULT 0,
         nouveaux_poussins INT NOT NULL,
         lot_id INT NULL,
+        oeufs_pourris INT NOT NULL DEFAULT 0,
         FOREIGN KEY (race_id) REFERENCES race(id),
         FOREIGN KEY (lot_id) REFERENCES lot(id)
     );
@@ -129,16 +129,16 @@ END
 GO
 
 -- ============================================================
--- DONNÉES INITIALES: races
+-- DONNEES INITIALES: races
 -- ============================================================
 IF NOT EXISTS (SELECT * FROM race WHERE nom = 'Borbonèze')
 BEGIN
-    INSERT INTO race (nom) VALUES ('Borbonèze');
+    INSERT INTO race (nom, taux_perte_oeufs, ratio_male_femelle) VALUES ('Borbonèze', 30, 30);
 END
 GO
 
 -- ============================================================
--- DONNÉES INITIALES: config_poids pour Borbonèze
+-- DONNEES INITIALES: config_poids pour Borboneze
 -- ============================================================
 DECLARE @borbo_id INT = (SELECT id FROM race WHERE nom = 'Borbonèze');
 
@@ -175,31 +175,31 @@ END
 GO
 
 -- ============================================================
--- DONNÉES INITIALES: config_prix pour Borbonèze
+-- DONNEES INITIALES: config_prix pour Borboneze
 -- ============================================================
 DECLARE @borbo_prix INT = (SELECT id FROM race WHERE nom = 'Borbonèze');
 
 IF NOT EXISTS (SELECT * FROM config_prix WHERE race_id = @borbo_prix)
 BEGIN
-    INSERT INTO config_prix (race_id, prix_achat_tete, prix_vente_gramme, prix_nourriture_gramme, prix_oeuf, nb_jour_eclosion)
-    VALUES (@borbo_prix, 500, 15, 5, 500, 30);
+    INSERT INTO config_prix (race_id, prix_achat_tete, prix_vente_gramme, prix_oeuf, prix_nourriture_gramme, nb_jour_eclosion)
+    VALUES (@borbo_prix, 500, 15, 500, 5, 30);
 END
 GO
 
 -- ============================================================
--- DONNÉES INITIALES: lots
+-- DONNEES INITIALES: lots
 -- ============================================================
 DECLARE @borbo_lot INT = (SELECT id FROM race WHERE nom = 'Borbonèze');
 
 IF NOT EXISTS (SELECT * FROM lot WHERE nom = 'Lot 1')
 BEGIN
-    INSERT INTO lot (nom, date_entree, nombre, race_id, age_entree_semaine, poids_initial, source)
-    VALUES ('Lot 1', '2026-01-01', 500, @borbo_lot, 0, 50.00, 'direct');
+    INSERT INTO lot (nom, date_entree, nombre, race_id, age_entree_semaine, poids_initial, source, sexe)
+    VALUES ('Lot 1', '2026-01-01', 500, @borbo_lot, 0, 50.00, 'direct', 'femelle');
 END
 GO
 
 -- ============================================================
--- DONNÉES INITIALES: mortalite
+-- DONNEES INITIALES: mortalite
 -- ============================================================
 DECLARE @lot1_id INT = (SELECT id FROM lot WHERE nom = 'Lot 1');
 
@@ -211,7 +211,7 @@ END
 GO
 
 -- ============================================================
--- DONNÉES INITIALES: oeufs
+-- DONNEES INITIALES: oeufs
 -- ============================================================
 DECLARE @borbo_oeuf INT = (SELECT id FROM race WHERE nom = 'Borbonèze');
 
@@ -229,48 +229,4 @@ END
 GO
 
 PRINT 'Base de données poulet_db initialisée avec succès !';
-GO
-
--- ============================================================
--- MIGRATION: Ajouter colonnes si elles n'existent pas (pour BD existantes)
--- ============================================================
-USE poulet_db;
-GO
-
-IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='race' AND COLUMN_NAME='taux_perte_oeufs')
-BEGIN
-    ALTER TABLE race ADD taux_perte_oeufs DECIMAL(5,2) NOT NULL DEFAULT 30;
-    PRINT 'Colonne taux_perte_oeufs ajoutée à race';
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='race' AND COLUMN_NAME='ratio_male_femelle')
-BEGIN
-    ALTER TABLE race ADD ratio_male_femelle DECIMAL(5,2) NOT NULL DEFAULT 30;
-    PRINT 'Colonne ratio_male_femelle ajoutée à race';
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='race' AND COLUMN_NAME='capacite_ponte')
-BEGIN
-    ALTER TABLE race ADD capacite_ponte INT NULL;
-    PRINT 'Colonne capacite_ponte ajoutée à race';
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='lot' AND COLUMN_NAME='sexe')
-BEGIN
-    ALTER TABLE lot ADD sexe NVARCHAR(10) NOT NULL DEFAULT 'femelle';
-    PRINT 'Colonne sexe ajoutée à lot';
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='transformation' AND COLUMN_NAME='oeufs_pourris')
-BEGIN
-    ALTER TABLE transformation ADD oeufs_pourris INT NOT NULL DEFAULT 0;
-    PRINT 'Colonne oeufs_pourris ajoutée à transformation';
-END
-GO
-
-PRINT 'Migration terminée avec succès !';
 GO

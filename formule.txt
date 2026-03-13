@@ -3,12 +3,34 @@
 ============================================================
 
 Variables de base (depuis la BDD):
+  - race          : nom, taux_perte_oeufs, ratio_male_femelle, capacite_ponte
   - config_poids  : semaine, poids_cumule (=gain hebdo), variation, nourriture_jour
-  - config_prix   : prix_achat_gramme, prix_vente_gramme, prix_nourriture_gramme, prix_oeuf
-  - lot           : nombre, date_entree, race_id, age_entree_semaine, poids_initial, source
+  - config_prix   : prix_achat_tete, prix_vente_gramme, prix_nourriture_gramme, prix_oeuf, nb_jour_eclosion
+  - lot           : nom, nombre, date_entree, race_id, age_entree_semaine, poids_initial, source, sexe
   - mortalite     : lot_id, date_mortalite, nombre
-  - oeuf          : race_id, nombre
-  - transformation: race_id, oeufs_transformes
+  - oeuf          : race_id, date_reception, nombre
+  - transformation: race_id, date_transformation, oeufs_transformes, oeufs_pourris, nouveaux_poussins, lot_id
+
+
+============================================================
+0. ECLOSION AUTOMATIQUE
+============================================================
+  Lors de la consultation du stock, le système vérifie automatiquement
+  si des oeufs ont atteint leur date d'éclosion.
+
+  date_eclosion = date_reception + nb_jour_eclosion - 1
+
+  Si date_eclosion <= date_consultation ET pas encore transformé :
+    oeufs_perdus    = ROUND(nombre × taux_perte_oeufs / 100)
+    oeufs_eclos     = nombre - oeufs_perdus
+    poussins_males  = ROUND(oeufs_eclos × ratio_male_femelle / 100)
+    poussins_femelles = oeufs_eclos - poussins_males
+
+  Résultat :
+    → Création d'un lot femelles (source='transformation', sexe='femelle')
+    → Création d'un lot mâles si poussins_males > 0 (source='transformation', sexe='mâle')
+    → Enregistrement d'une transformation (oeufs_transformes, oeufs_pourris, nouveaux_poussins)
+
 
 ============================================================
 1. SEMAINE (semaine_actuelle)
@@ -24,19 +46,20 @@ Variables de base (depuis la BDD):
 ============================================================
 2. POIDS MOYEN (poids_moyen)
 ============================================================
-  Étape 1 — Construire le poids cumulé réel :
+  Etape 1 — Construire le poids cumulé réel :
     poids_cumule dans la BDD = gain de la semaine (pas le poids total)
     poids_reel(Sn) = SUM(poids_cumule de S0 à Sn)
 
-  Étape 2 — Interpolation linéaire :
-    semaine_fractionnelle = jours_ecoules / 7
-    semaine_reelle        = age_entree_semaine + semaine_fractionnelle
+  Etape 2 — Interpolation linéaire :
+    jours_vecus            = jours_ecoules + 1
+    semaine_fractionnelle  = jours_vecus / 7
+    semaine_reelle         = age_entree_semaine + semaine_fractionnelle
 
     Si semaine_reelle <= max_semaine_config :
       semaine_basse  = FLOOR(semaine_fractionnelle) + age_entree_semaine
       semaine_haute  = semaine_basse + 1
       fraction       = semaine_fractionnelle - FLOOR(semaine_fractionnelle)
-      poids_moyen    = poids_reel(semaine_basse) + (poids_reel(semaine_haute) - poids_reel(semaine_basse)) × fraction
+      poids_moyen    = poids_reel(semaine_basse) + (poids_reel(semaine_haute) - poids_reel(semaine_basse)) * fraction
 
     Sinon (au-delà de la config) :
       poids_moyen = poids_reel(max_semaine_config)
@@ -59,8 +82,10 @@ Variables de base (depuis la BDD):
 ============================================================
 5. NOMBRE D'OEUF (stock_oeufs)
 ============================================================
-  stock_oeufs = SUM(oeuf.nombre pour la race)
-              - SUM(transformation.oeufs_transformes pour la race)
+  Uniquement pour les lots source='direct' (pas les lots issus de transformation)
+
+  stock_oeufs = SUM(oeuf.nombre pour la race WHERE date_reception <= date_consultation)
+              - SUM(transformation.oeufs_transformes pour la race WHERE date_transformation <= date_consultation)
 
 
 ============================================================
@@ -70,73 +95,91 @@ Variables de base (depuis la BDD):
     prix_achat_lot = 0
 
   Sinon :
-    prix_achat_lot = prix_achat_tete × nombre
+    prix_achat_lot = prix_achat_tete * nombre
 
 
 ============================================================
 7. PRIX DE VENTE — Estimation (estimation_valeur_poulet)
 ============================================================
-  estimation_valeur_poulet = poulets_vivants × poids_moyen × prix_vente_gramme
+  estimation_valeur_poulet = poulets_vivants * poids_moyen * prix_vente_gramme
 
 
 ============================================================
-8. PRIX NOURRITURE (cout_nourriture)
+8. NOURRITURE (nourriture)
 ============================================================
   Nourriture par poulet par jour = variation / 7
   (variation = config_poids.variation de la semaine courante)
   S0 = pas de nourriture
 
   --- Nourriture total (cumulé depuis l'entrée) ---
-  Pour chaque jour j de 1 à jours_ecoules :
-    semaine_du_jour = MIN(CEIL(j / 7) + age_entree_semaine, max_semaine_config)
-    si semaine_du_jour = 0 → pas de nourriture
+  Pour chaque jour j de 0 à jours_ecoules :
+    semaine_du_jour = MIN(FLOOR(j / 7) + 1 + age_entree_semaine, max_semaine_config)
     vivants_ce_jour = nombre - SUM(mortalite.nombre WHERE date_mortalite <= date_entree + j jours)
-    nourriture_jour_j = (variation_semaine / 7) × vivants_ce_jour
+    nourriture_jour_j = (variation_semaine / 7) * vivants_ce_jour
 
-  nourriture_total_grammes = SUM(nourriture_jour_j pour j=1 à jours_ecoules)
-  cout_nourriture_total    = nourriture_total_grammes × prix_nourriture_gramme
+  nourriture_total_grammes = SUM(nourriture_jour_j pour j=0 à jours_ecoules)
+  cout_nourriture_total    = nourriture_total_grammes * prix_nourriture_gramme
 
-  --- Nourriture par période (snapshot) ---
-  nourriture_jour_actuel   = (variation_semaine_courante / 7) × poulets_vivants
-  cout_nourriture_jour     = nourriture_jour_actuel × prix_nourriture_gramme
-  cout_nourriture_semaine  = cout_nourriture_jour × 7
-  cout_nourriture_mois     = cout_nourriture_jour × 30
+  --- Nourriture par période (snapshot basé sur aujourd'hui) ---
+  semaine_courante         = MIN(FLOOR(jours_ecoules / 7) + 1 + age_entree_semaine, max_semaine_config)
+  nourriture_jour_actuel   = (variation_semaine_courante / 7) * poulets_vivants
+  cout_nourriture_jour     = nourriture_jour_actuel * prix_nourriture_gramme
+  cout_nourriture_semaine  = cout_nourriture_jour * 7
+  cout_nourriture_mois     = cout_nourriture_jour * 30
 
 
 ============================================================
 9. EST. PRIX OEUF (estimation_valeur_oeufs)
 ============================================================
-  estimation_valeur_oeufs = stock_oeufs × prix_oeuf
+  estimation_valeur_oeufs = stock_oeufs * prix_oeuf
+  (uniquement pour les lots source='direct')
 
 
 ============================================================
-10. BÉNÉFICES (benefice)
+10. DEPENSES
 ============================================================
-  CA = poulets_vivants × poids_moyen × prix_vente_gramme
-     (= valeur marchande si on vendait tout wrmjbewqgfzwewgfkeaaujourd'hui)kdsugfdsgffiegizewfgeifgefgeqzfzefd
-
-  benefice_total   = CA - depenses_total
-  benefice_jour    = CA - depenses_jour
-  benefice_semaine = CA - depenses_semaine
-  benefice_mois    = CA - depenses_mois
-
-  Avec :
+  --- Lots source='direct' ---
   depenses_total   = prix_achat_lot + cout_nourriture_total
   depenses_jour    = prix_achat_lot + cout_nourriture_jour
   depenses_semaine = prix_achat_lot + cout_nourriture_semaine
   depenses_mois    = prix_achat_lot + cout_nourriture_mois
 
+  --- Lots source='transformation' ---
+  cout_incubation_par_bird = 21.43 (coût fixe pré-éclosion par poussin)
+  cout_incubation_total    = poulets_vivants * cout_incubation_par_bird
+
+  depenses_total   = cout_nourriture_total + cout_incubation_total
+  depenses_jour    = cout_nourriture_jour + cout_incubation_total
+  depenses_semaine = cout_nourriture_semaine + cout_incubation_total
+  depenses_mois    = cout_nourriture_mois + cout_incubation_total
+
 
 ============================================================
-RÉSUMÉ RAPIDE
+11. BENEFICES (benefice)
 ============================================================
+  CA = poulets_vivants * poids_moyen * prix_vente_gramme
+     (= valeur marchande si on vendait tout aujourd'hui)
+
+  benefice_total   = CA + valeur_oeufs - depenses_total
+  benefice_jour    = CA + valeur_oeufs - depenses_jour
+  benefice_semaine = CA + valeur_oeufs - depenses_semaine
+  benefice_mois    = CA + valeur_oeufs - depenses_mois
+
+  Note : valeur_oeufs = 0 pour les lots source='transformation'
+
+
+============================================================
+RESUME RAPIDE
+============================================================
+  Eclosion Auto = oeufs arrivés à terme → lots mâles/femelles automatiques
   Semaine       = age_entree + CEIL(jours / 7)         [plafonné]
   Poids Moy     = interpolation linéaire du cumul des gains
   Mort          = SUM(mortalité jusqu'à date)
   Nb Poulet     = nombre_initial - morts
-  Nb Oeuf       = oeufs_reçus - oeufs_transformés
-  Prix Achat    = prix_achat_gramme × poids_initial × nombre   (ou ×nombre si poussin)
-  Prix Vente    = vivants × poids_moyen × prix_vente_gramme
-  Nourriture    = Σ(variation/7 × vivants_du_jour) × prix_nourriture_gramme
-  Est. Oeuf     = stock_oeufs × prix_oeuf
-  Bénéfice      = Prix_Vente - (Prix_Achat + Nourriture)
+  Nb Oeuf       = oeufs_reçus - oeufs_transformés      [lots direct uniquement]
+  Prix Achat    = prix_achat_tete * nombre              [0 si transformation]
+  Prix Vente    = vivants * poids_moyen * prix_vente_gramme
+  Nourriture    = SUM(variation/7 * vivants_du_jour) * prix_nourriture_gramme
+  Est. Oeuf     = stock_oeufs * prix_oeuf
+  Dépenses      = prix_achat + nourriture [+ incubation si transformation]
+  Bénéfice      = CA + valeur_oeufs - dépenses

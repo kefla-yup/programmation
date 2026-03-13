@@ -1,33 +1,61 @@
+============================================================
+         TODO / FONCTIONNALITES IMPLEMENTEES
+============================================================
+
 1. Gestion des lots
 - Tout nouveau lot créé est défini par défaut en femelle
+- Chaque lot a : nom, date_entree, nombre, race, age_entree_semaine, poids_initial, source (direct/transformation), sexe (femelle/mâle)
 
+2. Transformation automatique des oeufs (éclosion)
+Lors de la consultation du stock, le système vérifie automatiquement si des oeufs ont atteint leur date d'éclosion (date_reception + nb_jour_eclosion - 1).
 
-2. Transformation automatique des œufs
-Après 30 jours, un lot d'œufs se transforme automatiquement en un nouveau lot de poussins selon ce calcul :
+Exemple avec 1 000 oeufs :
 
-Exemple avec 1 000 œufs :
+| Etape                 | Calcul         | Résultat        |
+| Oeufs de départ       | —              | 1 000           |
+| Oeufs pourris (30%)   | 1 000 * 30%    | 300 perdus      |
+| Oeufs éclos (70%)     | 1 000 * 70%    | 700 poussins    |
+| → Mâles (30%)         | 700 * 30%      | 210 mâles       |
+| → Femelles (70%)      | 700 * 70%      | 490 femelles    |
 
-| Étape | Calcul | Résultat |
-|
-| Œufs de départ | — | 1 000 |
-| Œufs pourris (30%) | 1 000 × 30% | 300 perdus |
-| Œufs éclos (70%) | 1 000 × 70% | 700 poussins |
-| → Mâles (30%) | 700 × 30% | 210 mâles |
-| → Femelles (70%) | 700 × 70% | 490 femelles |
+Résultat automatique :
+- Création d'un lot femelles (source='transformation', sexe='femelle')
+- Création d'un lot mâles si > 0 (source='transformation', sexe='mâle')
+- Enregistrement de la transformation (oeufs_transformes, oeufs_pourris, nouveaux_poussins)
 
-
-3. Colonne Pertes
-- Œufs pourris × prix unitaire = montant perdu en €
-
-
-4. Configuration par race
+3. Configuration par race
 Chaque race possède 3 paramètres configurables manuellement :
 
-| Paramètre | Description |
-|
-| Taux de perte | % d'œufs pourris/infertiles, configurable par race |
-| Ratio mâle / femelle | % de mâles obtenus après éclosion, configurable par race |
-| Capacité de ponte | Nombre max d'œufs qu'une poule peut produire, configurable par race |
+| Paramètre             | Description                                                          |
+| Taux de perte         | % d'oeufs pourris/infertiles, configurable par race                  |
+| Ratio mâle / femelle  | % de mâles obtenus après éclosion, configurable par race             |
+| Capacité de ponte     | Nombre max d'oeufs qu'une poule peut produire, configurable par race |
 
 > Les pourcentages ne sont pas fixes — ils sont définis et modifiables dans la configuration de chaque race.
 
+4. Vue Stock
+- Filtrage par date de consultation avec bouton Valider
+- Calcul automatique par lot : semaine, poids moyen, morts, vivants, nourriture, dépenses, CA, bénéfice
+- Filtre période nourriture/dépenses : jour, semaine, mois, total
+- Totaux en bas du tableau
+
+5. Tables en base (SQL Server)
+- race (id, nom, taux_perte_oeufs, ratio_male_femelle, capacite_ponte)
+- config_poids (id, race_id, semaine, poids_cumule, variation, nourriture_jour)
+- config_prix (id, race_id, prix_achat_tete, prix_vente_gramme, prix_oeuf, prix_nourriture_gramme, nb_jour_eclosion)
+- lot (id, nom, date_entree, nombre, race_id, age_entree_semaine, poids_initial, source, sexe)
+- mortalite (id, lot_id, date_mortalite, nombre)
+- oeuf (id, date_reception, race_id, nombre)
+- transformation (id, date_transformation, race_id, oeufs_transformes, nouveaux_poussins, lot_id, oeufs_pourris)
+
+6. Pages de l'application
+- Races : CRUD des races
+- Génétique : configuration taux_perte_oeufs, ratio_male_femelle, capacite_ponte par race
+- Poids : configuration poids/variation/nourriture par semaine par race
+- Prix : configuration prix achat/vente/nourriture/oeuf/eclosion par race
+- Poulets (Lots) : gestion des lots de poulets
+- Oeufs : entrée d'oeufs par race
+- Transformation : historique des transformations oeufs → poulets
+- Mortalité : enregistrement des morts par lot
+- Vue Stock : tableau récapitulatif avec calculs automatiques
+- Poids Poulet : consultation du poids estimé par lot
