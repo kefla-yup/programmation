@@ -11,6 +11,7 @@ import { MortaliteComponent } from './components/mortalite/mortalite.component';
 import { StockComponent } from './components/stock/stock.component';
 import { RacesComponent } from './components/races/races.component';
 import { PoidsPouletComponent } from './components/poids-poulet/poids-poulet.component';
+import { RaceGeneticsComponent } from './components/race-genetics/race-genetics.component';
 
 @Component({
   selector: 'app-root',
@@ -26,7 +27,8 @@ import { PoidsPouletComponent } from './components/poids-poulet/poids-poulet.com
     MortaliteComponent,
     StockComponent,
     RacesComponent,
-    PoidsPouletComponent
+    PoidsPouletComponent,
+    RaceGeneticsComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css'

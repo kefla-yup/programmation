@@ -17,6 +17,7 @@ router.get('/', async (req, res) => {
             .input('dateCons', sql.Date, dateConsultation)
             .query(`
                 SELECT o.id, o.date_reception, o.race_id, o.nombre, r.nom as race_nom,
+                       r.taux_perte_oeufs, r.ratio_male_femelle,
                        cp.nb_jour_eclosion,
                        DATEADD(DAY, cp.nb_jour_eclosion - 1, o.date_reception) as date_eclosion
                 FROM oeuf o
@@ -34,30 +35,56 @@ router.get('/', async (req, res) => {
             const dateEclosion = new Date(oeuf.date_eclosion).toISOString().split('T')[0];
             const nbJours = oeuf.nb_jour_eclosion || 21;
 
-            // Créer le lot d'éclosion
-            // Poids initial = 0 (les poussins viennent juste d'éclore)
-            const lotRes = await pool.request()
-                .input('nom_ecl_' + oeuf.id, sql.NVarChar, `Éclosion-${oeuf.race_nom}-${dateEclosion}`)
-                .input('date_ecl_' + oeuf.id, sql.Date, dateEclosion)
-                .input('nombre_ecl_' + oeuf.id, sql.Int, oeuf.nombre)
-                .input('race_ecl_' + oeuf.id, sql.Int, oeuf.race_id)
+            // Calculer les pertes et les poussins issus de l'éclosion
+            const tauxPerte = parseFloat(oeuf.taux_perte_oeufs) || 30;
+            const ratioMale = parseFloat(oeuf.ratio_male_femelle) || 30;
+            
+            const oeufsPertes = Math.round(oeuf.nombre * tauxPerte / 100);
+            const oeufsEclos = oeuf.nombre - oeufsPertes;
+            const poussinsMales = Math.round(oeufsEclos * ratioMale / 100);
+            const poussinsFemelles = oeufsEclos - poussinsMales;
+
+            // Créer le lot de femelles (défaut)
+            const lotFRes = await pool.request()
+                .input('nom_f_' + oeuf.id, sql.NVarChar, `Éclosion-${oeuf.race_nom}-${dateEclosion}-F`)
+                .input('date_f_' + oeuf.id, sql.Date, dateEclosion)
+                .input('nombre_f_' + oeuf.id, sql.Int, poussinsFemelles)
+                .input('race_f_' + oeuf.id, sql.Int, oeuf.race_id)
                 .query(`
-                    INSERT INTO lot (nom, date_entree, nombre, race_id, age_entree_semaine, poids_initial, source)
+                    INSERT INTO lot (nom, date_entree, nombre, race_id, age_entree_semaine, poids_initial, source, sexe)
                     OUTPUT INSERTED.*
-                    VALUES (@nom_ecl_${oeuf.id}, @date_ecl_${oeuf.id}, @nombre_ecl_${oeuf.id}, @race_ecl_${oeuf.id}, 0, 0, 'transformation')
+                    VALUES (@nom_f_${oeuf.id}, @date_f_${oeuf.id}, @nombre_f_${oeuf.id}, @race_f_${oeuf.id}, 0, 0, 'transformation', 'femelle')
                 `);
-            const lotId = lotRes.recordset[0].id;
+            const lotIdF = lotFRes.recordset[0].id;
+
+            // Créer le lot de mâles si applicable
+            let lotIdM = null;
+            if (poussinsMales > 0) {
+                const lotMRes = await pool.request()
+                    .input('nom_m_' + oeuf.id, sql.NVarChar, `Éclosion-${oeuf.race_nom}-${dateEclosion}-M`)
+                    .input('date_m_' + oeuf.id, sql.Date, dateEclosion)
+                    .input('nombre_m_' + oeuf.id, sql.Int, poussinsMales)
+                    .input('race_m_' + oeuf.id, sql.Int, oeuf.race_id)
+                    .query(`
+                        INSERT INTO lot (nom, date_entree, nombre, race_id, age_entree_semaine, poids_initial, source, sexe)
+                        OUTPUT INSERTED.*
+                        VALUES (@nom_m_${oeuf.id}, @date_m_${oeuf.id}, @nombre_m_${oeuf.id}, @race_m_${oeuf.id}, 0, 0, 'transformation', 'mâle')
+                    `);
+                lotIdM = lotMRes.recordset[0].id;
+            }
 
             // Enregistrer la transformation
+            const totalPoussins = poussinsFemelles + poussinsMales;
             await pool.request()
-                .input('dt_ecl_' + oeuf.id, sql.Date, dateEclosion)
-                .input('rid2_ecl_' + oeuf.id, sql.Int, oeuf.race_id)
-                .input('oeufs_ecl_' + oeuf.id, sql.Int, oeuf.nombre)
-                .input('poussins_ecl_' + oeuf.id, sql.Int, oeuf.nombre)
-                .input('lid_ecl_' + oeuf.id, sql.Int, lotId)
+                .input('dt_' + oeuf.id, sql.Date, dateEclosion)
+                .input('rid_' + oeuf.id, sql.Int, oeuf.race_id)
+                .input('oeufs_total_' + oeuf.id, sql.Int, oeuf.nombre)
+                .input('oeufs_pourris_' + oeuf.id, sql.Int, oeufsPertes)
+                .input('poussins_total_' + oeuf.id, sql.Int, totalPoussins)
+                .input('lid_f_' + oeuf.id, sql.Int, lotIdF)
                 .query(`
-                    INSERT INTO transformation (date_transformation, race_id, oeufs_transformes, nouveaux_poussins, lot_id)
-                    VALUES (@dt_ecl_${oeuf.id}, @rid2_ecl_${oeuf.id}, @oeufs_ecl_${oeuf.id}, @poussins_ecl_${oeuf.id}, @lid_ecl_${oeuf.id})
+                    INSERT INTO transformation (date_transformation, race_id, oeufs_transformes, oeufs_pourris, nouveaux_poussins, lot_id)
+                    VALUES (@dt_${oeuf.id}, @rid_${oeuf.id}, @oeufs_total_${oeuf.id}, @oeufs_pourris_${oeuf.id}, @poussins_total_${oeuf.id}, @lid_f_${oeuf.id})
                 `);
         }
 

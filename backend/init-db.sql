@@ -15,7 +15,10 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='race' AND xtype='U')
 BEGIN
     CREATE TABLE race (
         id INT IDENTITY(1,1) PRIMARY KEY,
-        nom NVARCHAR(50) NOT NULL UNIQUE
+        nom NVARCHAR(50) NOT NULL UNIQUE,
+        taux_perte_oeufs DECIMAL(5,2) NOT NULL DEFAULT 30,
+        ratio_male_femelle DECIMAL(5,2) NOT NULL DEFAULT 30,
+        capacite_ponte INT NULL
     );
 END
 GO
@@ -70,6 +73,7 @@ BEGIN
         age_entree_semaine INT NOT NULL DEFAULT 0,
         poids_initial DECIMAL(10,2) NOT NULL DEFAULT 0,
         source NVARCHAR(50) DEFAULT 'direct',
+        sexe NVARCHAR(10) NOT NULL DEFAULT 'femelle',
         FOREIGN KEY (race_id) REFERENCES race(id)
     );
 END
@@ -115,6 +119,7 @@ BEGIN
         date_transformation DATE NOT NULL,
         race_id INT NOT NULL,
         oeufs_transformes INT NOT NULL,
+        oeufs_pourris INT NOT NULL DEFAULT 0,
         nouveaux_poussins INT NOT NULL,
         lot_id INT NULL,
         FOREIGN KEY (race_id) REFERENCES race(id),
@@ -224,4 +229,48 @@ END
 GO
 
 PRINT 'Base de données poulet_db initialisée avec succès !';
+GO
+
+-- ============================================================
+-- MIGRATION: Ajouter colonnes si elles n'existent pas (pour BD existantes)
+-- ============================================================
+USE poulet_db;
+GO
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='race' AND COLUMN_NAME='taux_perte_oeufs')
+BEGIN
+    ALTER TABLE race ADD taux_perte_oeufs DECIMAL(5,2) NOT NULL DEFAULT 30;
+    PRINT 'Colonne taux_perte_oeufs ajoutée à race';
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='race' AND COLUMN_NAME='ratio_male_femelle')
+BEGIN
+    ALTER TABLE race ADD ratio_male_femelle DECIMAL(5,2) NOT NULL DEFAULT 30;
+    PRINT 'Colonne ratio_male_femelle ajoutée à race';
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='race' AND COLUMN_NAME='capacite_ponte')
+BEGIN
+    ALTER TABLE race ADD capacite_ponte INT NULL;
+    PRINT 'Colonne capacite_ponte ajoutée à race';
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='lot' AND COLUMN_NAME='sexe')
+BEGIN
+    ALTER TABLE lot ADD sexe NVARCHAR(10) NOT NULL DEFAULT 'femelle';
+    PRINT 'Colonne sexe ajoutée à lot';
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='transformation' AND COLUMN_NAME='oeufs_pourris')
+BEGIN
+    ALTER TABLE transformation ADD oeufs_pourris INT NOT NULL DEFAULT 0;
+    PRINT 'Colonne oeufs_pourris ajoutée à transformation';
+END
+GO
+
+PRINT 'Migration terminée avec succès !';
 GO

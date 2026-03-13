@@ -5,6 +5,9 @@
       <li><a href="#" [class.active]="currentView === 'races'" (click)="setView('races'); $event.preventDefault()">
         <i class="bi bi-egg-fill"></i><span>Races</span>
       </a></li>
+      <li><a href="#" [class.active]="currentView === 'raceGenetics'" (click)="setView('raceGenetics'); $event.preventDefault()">
+        <i class="bi bi-bezier"></i><span>Génétique</span>
+      </a></li>
       <li><a href="#" [class.active]="currentView === 'configPoids'" (click)="setView('configPoids'); $event.preventDefault()">
         <i class="bi bi-speedometer2"></i><span>Poids</span>
       </a></li>
