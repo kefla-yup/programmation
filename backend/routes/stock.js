@@ -322,17 +322,18 @@ router.get('/', async (req, res) => {
             let depensesSemaine = prixAchatLot + coutNourritureSemaine;
             let depensesMois = prixAchatLot + coutNourritureMois;
             let depensesTotal = prixAchatLot + coutNourritureTotal;
-            
-            // Pour les lots créés par transformation (éclosion), ajouter un coût d'incubation
-            // (nourriture pre-eclosion + frais de transformation)
-            if (lot.source === 'transformation') {
-                const coutIncubationParBird = 21.43; // Coût prés-éclosion et transformation par poussins
-                const coutIncubationTotal = pouletsVivants * coutIncubationParBird;
-                depensesJour += coutIncubationTotal;
-                depensesSemaine += coutIncubationTotal;
-                depensesMois += coutIncubationTotal;
-                depensesTotal += coutIncubationTotal;
-            }
+
+            // Pour les lots créés par transformation (éclosion), NE PAS ajouter de coût d'incubation
+            // car l'incubation s'est déroulée pendant les 30 jours avant la création de ce lot
+            // Les dépenses du lot transformé ne commencent qu'à partir de son jour de création
+            // if (lot.source === 'transformation') {
+            //     const coutIncubationParBird = 21.43; // Déjà compté dans les oeufs
+            //     const coutIncubationTotal = pouletsVivants * coutIncubationParBird;
+            //     depensesJour += coutIncubationTotal;
+            //     depensesSemaine += coutIncubationTotal;
+            //     depensesMois += coutIncubationTotal;
+            //     depensesTotal += coutIncubationTotal;
+            // }
 
             // Valeur des oeufs en stock
             // Les oeufs ne sont comptabilis és que pour les lots d'origine (direct), non pour les lots transformés
