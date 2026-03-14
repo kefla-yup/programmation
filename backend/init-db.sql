@@ -9,6 +9,41 @@ USE poulet_db;
 GO
 
 -- ============================================================
+-- TRUNCATE ALL TABLES (empty the database)
+-- ============================================================
+BEGIN TRY
+    DISABLE TRIGGER ALL ON transformation;
+    DISABLE TRIGGER ALL ON mortalite;
+    DISABLE TRIGGER ALL ON oeuf;
+    DISABLE TRIGGER ALL ON lot;
+    DISABLE TRIGGER ALL ON config_prix;
+    DISABLE TRIGGER ALL ON config_poids;
+    DISABLE TRIGGER ALL ON race;
+
+    TRUNCATE TABLE transformation;
+    TRUNCATE TABLE mortalite;
+    TRUNCATE TABLE oeuf;
+    TRUNCATE TABLE lot;
+    TRUNCATE TABLE config_prix;
+    TRUNCATE TABLE config_poids;
+    TRUNCATE TABLE race;
+
+    ENABLE TRIGGER ALL ON race;
+    ENABLE TRIGGER ALL ON config_poids;
+    ENABLE TRIGGER ALL ON config_prix;
+    ENABLE TRIGGER ALL ON lot;
+    ENABLE TRIGGER ALL ON oeuf;
+    ENABLE TRIGGER ALL ON mortalite;
+    ENABLE TRIGGER ALL ON transformation;
+
+    PRINT 'Tables tronquées avec succès';
+END TRY
+BEGIN CATCH
+    PRINT 'Les tables n''existent pas encore - création en cours...';
+END CATCH
+GO
+
+-- ============================================================
 -- TABLE: race
 -- ============================================================
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='race' AND xtype='U')
@@ -133,7 +168,7 @@ GO
 -- ============================================================
 IF NOT EXISTS (SELECT * FROM race WHERE nom = 'Borbonèze')
 BEGIN
-    INSERT INTO race (nom, taux_perte_oeufs, ratio_male_femelle) VALUES ('Borbonèze', 30, 30);
+    INSERT INTO race (nom, taux_perte_oeufs, ratio_male_femelle) VALUES ('Borbonèze', 0, 30);
 END
 GO
 
