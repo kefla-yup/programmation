@@ -7,7 +7,13 @@ const { getPool, sql } = require('../config/db');
 router.get('/', async (req, res) => {
     try {
         const pool = await getPool();
-        const dateConsultation = req.query.date || new Date().toISOString().split('T')[0];
+
+        // Validate date format
+        let dateConsultation = req.query.date || new Date().toISOString().split('T')[0];
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(dateConsultation)) {
+            return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
+        }
 
         // ============================================================
         // ÉCLOSION AUTOMATIQUE : transformer les œufs arrivés à terme
@@ -19,73 +25,88 @@ router.get('/', async (req, res) => {
                 SELECT o.id, o.date_reception, o.race_id, o.nombre, r.nom as race_nom,
                        r.taux_perte_oeufs, r.ratio_male_femelle,
                        cp.nb_jour_eclosion,
-                       DATEADD(DAY, cp.nb_jour_eclosion - 1, o.date_reception) as date_eclosion
+                       DATEADD(DAY, cp.nb_jour_eclosion, o.date_reception) as date_eclosion
                 FROM oeuf o
                 JOIN race r ON o.race_id = r.id
                 LEFT JOIN config_prix cp ON cp.race_id = o.race_id
                 WHERE NOT EXISTS (
                     SELECT 1 FROM transformation t WHERE t.race_id = o.race_id
-                    AND t.date_transformation = DATEADD(DAY, ISNULL(cp.nb_jour_eclosion, 21) - 1, o.date_reception)
+                    AND t.date_transformation = DATEADD(DAY, ISNULL(cp.nb_jour_eclosion, 21), o.date_reception)
                     AND t.oeufs_transformes = o.nombre
                 )
-                AND DATEADD(DAY, ISNULL(cp.nb_jour_eclosion, 21) - 1, o.date_reception) <= @dateCons
+                AND DATEADD(DAY, ISNULL(cp.nb_jour_eclosion, 21), o.date_reception) <= @dateCons
             `);
 
         for (const oeuf of oeufsResult.recordset) {
+            // Validate egg reception date
+            if (!oeuf.date_eclosion) continue;
+
             const dateEclosion = new Date(oeuf.date_eclosion).toISOString().split('T')[0];
             const nbJours = oeuf.nb_jour_eclosion || 21;
 
             // Calculer les pertes et les poussins issus de l'éclosion
-            const tauxPerte = parseFloat(oeuf.taux_perte_oeufs) || 30;
-            const ratioMale = parseFloat(oeuf.ratio_male_femelle) || 30;
-            
+            const tauxPerte = (oeuf.taux_perte_oeufs !== null && oeuf.taux_perte_oeufs !== undefined) ? parseFloat(oeuf.taux_perte_oeufs) : 30;
+            const ratioMale = (oeuf.ratio_male_femelle !== null && oeuf.ratio_male_femelle !== undefined) ? parseFloat(oeuf.ratio_male_femelle) : 30;
+
             const oeufsPertes = Math.round(oeuf.nombre * tauxPerte / 100);
             const oeufsEclos = oeuf.nombre - oeufsPertes;
             const poussinsMales = Math.round(oeufsEclos * ratioMale / 100);
             const poussinsFemelles = oeufsEclos - poussinsMales;
 
-            // Créer le lot de femelles (défaut)
-            const lotFRes = await pool.request()
-                .input('nom_f_' + oeuf.id, sql.NVarChar, `Éclosion-${oeuf.race_nom}-${dateEclosion}-F`)
-                .input('date_f_' + oeuf.id, sql.Date, dateEclosion)
-                .input('nombre_f_' + oeuf.id, sql.Int, poussinsFemelles)
-                .input('race_f_' + oeuf.id, sql.Int, oeuf.race_id)
-                .query(`
-                    INSERT INTO lot (nom, date_entree, nombre, race_id, age_entree_semaine, poids_initial, source, sexe)
-                    OUTPUT INSERTED.*
-                    VALUES (@nom_f_${oeuf.id}, @date_f_${oeuf.id}, @nombre_f_${oeuf.id}, @race_f_${oeuf.id}, 0, 0, 'transformation', 'femelle')
-                `);
-            const lotIdF = lotFRes.recordset[0].id;
+            // Start transaction for atomic operations
+            const transaction = new sql.Transaction(pool);
+            try {
+                await transaction.begin();
 
-            // Créer le lot de mâles si applicable
-            let lotIdM = null;
-            if (poussinsMales > 0) {
-                const lotMRes = await pool.request()
-                    .input('nom_m_' + oeuf.id, sql.NVarChar, `Éclosion-${oeuf.race_nom}-${dateEclosion}-M`)
-                    .input('date_m_' + oeuf.id, sql.Date, dateEclosion)
-                    .input('nombre_m_' + oeuf.id, sql.Int, poussinsMales)
-                    .input('race_m_' + oeuf.id, sql.Int, oeuf.race_id)
+                // Créer le lot de femelles (défaut)
+                const lotFRes = await transaction.request()
+                    .input('nom_f_' + oeuf.id, sql.NVarChar, `Éclosion-${oeuf.race_nom}-${dateEclosion}-F`)
+                    .input('date_f_' + oeuf.id, sql.Date, dateEclosion)
+                    .input('nombre_f_' + oeuf.id, sql.Int, poussinsFemelles)
+                    .input('race_f_' + oeuf.id, sql.Int, oeuf.race_id)
                     .query(`
                         INSERT INTO lot (nom, date_entree, nombre, race_id, age_entree_semaine, poids_initial, source, sexe)
                         OUTPUT INSERTED.*
-                        VALUES (@nom_m_${oeuf.id}, @date_m_${oeuf.id}, @nombre_m_${oeuf.id}, @race_m_${oeuf.id}, 0, 0, 'transformation', 'mâle')
+                        VALUES (@nom_f_${oeuf.id}, @date_f_${oeuf.id}, @nombre_f_${oeuf.id}, @race_f_${oeuf.id}, 0, 0, 'transformation', 'femelle')
                     `);
-                lotIdM = lotMRes.recordset[0].id;
-            }
+                const lotIdF = lotFRes.recordset[0].id;
 
-            // Enregistrer la transformation
-            const totalPoussins = poussinsFemelles + poussinsMales;
-            await pool.request()
-                .input('dt_' + oeuf.id, sql.Date, dateEclosion)
-                .input('rid_' + oeuf.id, sql.Int, oeuf.race_id)
-                .input('oeufs_total_' + oeuf.id, sql.Int, oeuf.nombre)
-                .input('oeufs_pourris_' + oeuf.id, sql.Int, oeufsPertes)
-                .input('poussins_total_' + oeuf.id, sql.Int, totalPoussins)
-                .input('lid_f_' + oeuf.id, sql.Int, lotIdF)
-                .query(`
-                    INSERT INTO transformation (date_transformation, race_id, oeufs_transformes, oeufs_pourris, nouveaux_poussins, lot_id)
-                    VALUES (@dt_${oeuf.id}, @rid_${oeuf.id}, @oeufs_total_${oeuf.id}, @oeufs_pourris_${oeuf.id}, @poussins_total_${oeuf.id}, @lid_f_${oeuf.id})
-                `);
+                // Créer le lot de mâles si applicable
+                let lotIdM = null;
+                if (poussinsMales > 0) {
+                    const lotMRes = await transaction.request()
+                        .input('nom_m_' + oeuf.id, sql.NVarChar, `Éclosion-${oeuf.race_nom}-${dateEclosion}-M`)
+                        .input('date_m_' + oeuf.id, sql.Date, dateEclosion)
+                        .input('nombre_m_' + oeuf.id, sql.Int, poussinsMales)
+                        .input('race_m_' + oeuf.id, sql.Int, oeuf.race_id)
+                        .query(`
+                            INSERT INTO lot (nom, date_entree, nombre, race_id, age_entree_semaine, poids_initial, source, sexe)
+                            OUTPUT INSERTED.*
+                            VALUES (@nom_m_${oeuf.id}, @date_m_${oeuf.id}, @nombre_m_${oeuf.id}, @race_m_${oeuf.id}, 0, 0, 'transformation', 'mâle')
+                        `);
+                    lotIdM = lotMRes.recordset[0].id;
+                }
+
+                // Enregistrer la transformation
+                const totalPoussins = poussinsFemelles + poussinsMales;
+                await transaction.request()
+                    .input('dt_' + oeuf.id, sql.Date, dateEclosion)
+                    .input('rid_' + oeuf.id, sql.Int, oeuf.race_id)
+                    .input('oeufs_total_' + oeuf.id, sql.Int, oeuf.nombre)
+                    .input('oeufs_pourris_' + oeuf.id, sql.Int, oeufsPertes)
+                    .input('poussins_total_' + oeuf.id, sql.Int, totalPoussins)
+                    .input('lid_f_' + oeuf.id, sql.Int, lotIdF)
+                    .query(`
+                        INSERT INTO transformation (date_transformation, race_id, oeufs_transformes, oeufs_pourris, nouveaux_poussins, lot_id)
+                        VALUES (@dt_${oeuf.id}, @rid_${oeuf.id}, @oeufs_total_${oeuf.id}, @oeufs_pourris_${oeuf.id}, @poussins_total_${oeuf.id}, @lid_f_${oeuf.id})
+                    `);
+
+                await transaction.commit();
+            } catch (txErr) {
+                await transaction.rollback();
+                console.error(`Transaction failed for egg ${oeuf.id}:`, txErr.message);
+                // Continue with next egg instead of crashing
+            }
         }
 
         // Récupérer tous les lots
@@ -108,7 +129,7 @@ router.get('/', async (req, res) => {
             const dateEntree = new Date(lot.date_entree);
             const dateCons = new Date(dateConsultation);
             const diffJours = Math.floor((dateCons - dateEntree) / (24 * 60 * 60 * 1000));
-            const semainesEcoulees = diffJours > 0 ? Math.ceil(diffJours / 7) : 0;
+            const semainesEcoulees = diffJours > 0 ? Math.floor(diffJours / 7) + 1 : 0;
             const semaineActuelleReel = lot.age_entree_semaine + semainesEcoulees;
 
             // Récupérer config poids pour la race
