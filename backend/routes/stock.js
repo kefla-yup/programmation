@@ -58,47 +58,33 @@ router.get('/', async (req, res) => {
             try {
                 await transaction.begin();
 
-                // Créer le lot de femelles (défaut)
-                const lotFRes = await transaction.request()
-                    .input('nom_f_' + oeuf.id, sql.NVarChar, `Éclosion-${oeuf.race_nom}-${dateEclosion}-F`)
-                    .input('date_f_' + oeuf.id, sql.Date, dateEclosion)
-                    .input('nombre_f_' + oeuf.id, sql.Int, poussinsFemelles)
-                    .input('race_f_' + oeuf.id, sql.Int, oeuf.race_id)
+                // Créer un seul lot avec femelles et mâles
+                const totalPoussins = poussinsFemelles + poussinsMales;
+                const lotRes = await transaction.request()
+                    .input('nom_' + oeuf.id, sql.NVarChar, `Éclosion-${oeuf.race_nom}-${dateEclosion}`)
+                    .input('date_' + oeuf.id, sql.Date, dateEclosion)
+                    .input('nombre_' + oeuf.id, sql.Int, totalPoussins)
+                    .input('race_' + oeuf.id, sql.Int, oeuf.race_id)
+                    .input('fem_' + oeuf.id, sql.Int, poussinsFemelles)
+                    .input('mal_' + oeuf.id, sql.Int, poussinsMales)
                     .query(`
-                        INSERT INTO lot (nom, date_entree, nombre, race_id, age_entree_semaine, poids_initial, source, sexe)
+                        INSERT INTO lot (nom, date_entree, nombre, race_id, age_entree_semaine, poids_initial, source, sexe, nombre_femelles, nombre_males)
                         OUTPUT INSERTED.*
-                        VALUES (@nom_f_${oeuf.id}, @date_f_${oeuf.id}, @nombre_f_${oeuf.id}, @race_f_${oeuf.id}, 0, 0, 'transformation', 'femelle')
+                        VALUES (@nom_${oeuf.id}, @date_${oeuf.id}, @nombre_${oeuf.id}, @race_${oeuf.id}, 0, 0, 'transformation', 'mixte', @fem_${oeuf.id}, @mal_${oeuf.id})
                     `);
-                const lotIdF = lotFRes.recordset[0].id;
-
-                // Créer le lot de mâles si applicable
-                let lotIdM = null;
-                if (poussinsMales > 0) {
-                    const lotMRes = await transaction.request()
-                        .input('nom_m_' + oeuf.id, sql.NVarChar, `Éclosion-${oeuf.race_nom}-${dateEclosion}-M`)
-                        .input('date_m_' + oeuf.id, sql.Date, dateEclosion)
-                        .input('nombre_m_' + oeuf.id, sql.Int, poussinsMales)
-                        .input('race_m_' + oeuf.id, sql.Int, oeuf.race_id)
-                        .query(`
-                            INSERT INTO lot (nom, date_entree, nombre, race_id, age_entree_semaine, poids_initial, source, sexe)
-                            OUTPUT INSERTED.*
-                            VALUES (@nom_m_${oeuf.id}, @date_m_${oeuf.id}, @nombre_m_${oeuf.id}, @race_m_${oeuf.id}, 0, 0, 'transformation', 'mâle')
-                        `);
-                    lotIdM = lotMRes.recordset[0].id;
-                }
+                const lotId = lotRes.recordset[0].id;
 
                 // Enregistrer la transformation
-                const totalPoussins = poussinsFemelles + poussinsMales;
                 await transaction.request()
                     .input('dt_' + oeuf.id, sql.Date, dateEclosion)
                     .input('rid_' + oeuf.id, sql.Int, oeuf.race_id)
                     .input('oeufs_total_' + oeuf.id, sql.Int, oeuf.nombre)
                     .input('oeufs_pourris_' + oeuf.id, sql.Int, oeufsPertes)
                     .input('poussins_total_' + oeuf.id, sql.Int, totalPoussins)
-                    .input('lid_f_' + oeuf.id, sql.Int, lotIdF)
+                    .input('lid_' + oeuf.id, sql.Int, lotId)
                     .query(`
                         INSERT INTO transformation (date_transformation, race_id, oeufs_transformes, oeufs_pourris, nouveaux_poussins, lot_id)
-                        VALUES (@dt_${oeuf.id}, @rid_${oeuf.id}, @oeufs_total_${oeuf.id}, @oeufs_pourris_${oeuf.id}, @poussins_total_${oeuf.id}, @lid_f_${oeuf.id})
+                        VALUES (@dt_${oeuf.id}, @rid_${oeuf.id}, @oeufs_total_${oeuf.id}, @oeufs_pourris_${oeuf.id}, @poussins_total_${oeuf.id}, @lid_${oeuf.id})
                     `);
 
                 await transaction.commit();

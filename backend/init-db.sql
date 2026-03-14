@@ -109,8 +109,24 @@ BEGIN
         poids_initial DECIMAL(10,2) NOT NULL DEFAULT 0,
         source NVARCHAR(50) NULL DEFAULT 'direct',
         sexe NVARCHAR(10) NOT NULL DEFAULT 'femelle',
+        nombre_femelles INT NOT NULL DEFAULT 0,
+        nombre_males INT NOT NULL DEFAULT 0,
         FOREIGN KEY (race_id) REFERENCES race(id)
     );
+END
+GO
+
+-- Add missing columns if table already exists
+IF EXISTS (SELECT * FROM sysobjects WHERE name='lot' AND xtype='U')
+BEGIN
+    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='lot' AND COLUMN_NAME='nombre_femelles')
+    BEGIN
+        ALTER TABLE lot ADD nombre_femelles INT NOT NULL DEFAULT 0;
+    END
+    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='lot' AND COLUMN_NAME='nombre_males')
+    BEGIN
+        ALTER TABLE lot ADD nombre_males INT NOT NULL DEFAULT 0;
+    END
 END
 GO
 
