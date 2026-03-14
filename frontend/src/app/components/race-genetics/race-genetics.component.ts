@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { ApiService } from '../../services/api.service';
 import { MessageService } from '../../services/message.service';
 
@@ -278,11 +280,12 @@ import { MessageService } from '../../services/message.service';
     }
   `]
 })
-export class RaceGeneticsComponent implements OnInit {
+export class RaceGeneticsComponent implements OnInit, OnDestroy {
   races: any[] = [];
   selectedRaceId: number | string = '';
   form!: FormGroup;
   simulationOeufs: number = 1000;
+  private destroy$ = new Subject<void>();
 
   constructor(
     private apiService: ApiService,
@@ -295,6 +298,11 @@ export class RaceGeneticsComponent implements OnInit {
     this.initForm();
   }
 
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   initForm() {
     this.form = this.fb.group({
       taux_perte_oeufs: [30, [Validators.required, Validators.min(0), Validators.max(100)]],
@@ -304,45 +312,52 @@ export class RaceGeneticsComponent implements OnInit {
   }
 
   loadRaces() {
-    this.apiService.getRaces().subscribe({
-      next: (races) => {
-        this.races = races;
-      },
-      error: (err) => {
-        this.messageService.error('Erreur lors du chargement des races');
-        console.error(err);
-      }
-    });
+    this.apiService.getRaces()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (races) => {
+          this.races = races;
+        },
+        error: (err) => {
+          this.messageService.error('Erreur lors du chargement des races');
+          console.error(err);
+        }
+      });
   }
 
   onRaceSelected() {
     if (this.selectedRaceId) {
-      this.apiService.getRaceGenetics(Number(this.selectedRaceId)).subscribe({
-        next: (genetics) => {
-          this.form.patchValue({
-            taux_perte_oeufs: genetics.taux_perte_oeufs,
-            ratio_male_femelle: genetics.ratio_male_femelle,
-            capacite_ponte: genetics.capacite_ponte
-          });
-        },
-        error: (err) => {
-          console.error(err);
-        }
-      });
+      this.apiService.getRaceGenetics(Number(this.selectedRaceId))
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (genetics) => {
+            this.form.patchValue({
+              taux_perte_oeufs: genetics.taux_perte_oeufs,
+              ratio_male_femelle: genetics.ratio_male_femelle,
+              capacite_ponte: genetics.capacite_ponte
+            });
+          },
+          error: (err) => {
+            this.messageService.error('Erreur lors du chargement de la race');
+            console.error(err);
+          }
+        });
     }
   }
 
   onSubmit() {
     if (this.form.valid && this.selectedRaceId) {
-      this.apiService.updateRaceGenetics(Number(this.selectedRaceId), this.form.value).subscribe({
-        next: () => {
-          this.messageService.success('Paramètres génétiques sauvegardés');
-        },
-        error: (err) => {
-          this.messageService.error('Erreur lors de la sauvegarde');
-          console.error(err);
-        }
-      });
+      this.apiService.updateRaceGenetics(Number(this.selectedRaceId), this.form.value)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.messageService.success('Paramètres génétiques sauvegardés');
+          },
+          error: (err) => {
+            this.messageService.error('Erreur lors de la sauvegarde');
+            console.error(err);
+          }
+        });
     }
   }
 
@@ -351,7 +366,9 @@ export class RaceGeneticsComponent implements OnInit {
   }
 
   calculateOeufsPertes(): number {
-    return Math.round(this.simulationOeufs * (this.form.get('taux_perte_oeufs')?.value || 30) / 100);
+    const tauxPerte = this.form.get('taux_perte_oeufs')?.value;
+    const perte = (tauxPerte !== null && tauxPerte !== undefined) ? tauxPerte : 30;
+    return Math.round(this.simulationOeufs * perte / 100);
   }
 
   calculateOeufsEclos(): number {
@@ -359,7 +376,9 @@ export class RaceGeneticsComponent implements OnInit {
   }
 
   calculateMales(): number {
-    return Math.round(this.calculateOeufsEclos() * (this.form.get('ratio_male_femelle')?.value || 30) / 100);
+    const ratioMale = this.form.get('ratio_male_femelle')?.value;
+    const ratio = (ratioMale !== null && ratioMale !== undefined) ? ratioMale : 30;
+    return Math.round(this.calculateOeufsEclos() * ratio / 100);
   }
 
   calculateFemelles(): number {
