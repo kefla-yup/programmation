@@ -352,6 +352,8 @@ router.get('/', async (req, res) => {
                 source: lot.source,
                 date_entree: lot.date_entree,
                 nombre_initial: lot.nombre,
+                nombre_femelles: lot.nombre_femelles || 0,
+                nombre_males: lot.nombre_males || 0,
                 poulets_vivants: pouletsVivants,
                 total_morts: totalMorts,
                 stock_oeufs: stockOeufs,
