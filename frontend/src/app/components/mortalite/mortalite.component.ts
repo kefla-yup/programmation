@@ -52,7 +52,9 @@ export class MortaliteComponent implements OnInit {
     this.editForm = {
       lot_id: m.lot_id,
       date_mortalite: m.date_mortalite.split('T')[0],
-      nombre: m.nombre
+      nombre: m.nombre,
+      nombre_morts_males: m.nombre_morts_males || 0,
+      nombre_morts_femelles: m.nombre_morts_femelles || 0
     };
   }
 
