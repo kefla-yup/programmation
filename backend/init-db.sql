@@ -140,8 +140,24 @@ BEGIN
         lot_id INT NOT NULL,
         date_mortalite DATE NOT NULL,
         nombre INT NOT NULL,
+        nombre_morts_males INT NOT NULL DEFAULT 0,
+        nombre_morts_femelles INT NOT NULL DEFAULT 0,
         FOREIGN KEY (lot_id) REFERENCES lot(id)
     );
+END
+GO
+
+-- Add missing columns if table already exists
+IF EXISTS (SELECT * FROM sysobjects WHERE name='mortalite' AND xtype='U')
+BEGIN
+    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='mortalite' AND COLUMN_NAME='nombre_morts_males')
+    BEGIN
+        ALTER TABLE mortalite ADD nombre_morts_males INT NOT NULL DEFAULT 0;
+    END
+    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='mortalite' AND COLUMN_NAME='nombre_morts_femelles')
+    BEGIN
+        ALTER TABLE mortalite ADD nombre_morts_femelles INT NOT NULL DEFAULT 0;
+    END
 END
 GO
 

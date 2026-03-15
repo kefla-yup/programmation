@@ -258,6 +258,7 @@ router.get('/', async (req, res) => {
             // Seuls les lots d'origine (source='direct') peuvent avoir des œufs
             // Les lots créés par transformation (éclosion) ne peuvent pas avoir d'œufs
             let stockOeufs = 0;
+            let oeufsPourrissTotal = 0;
             if (lot.source === 'direct') {
                 const oeufsStockResult = await pool.request()
                     .input('race_oeufs_' + lot.id, sql.Int, lot.race_id)
@@ -269,6 +270,17 @@ router.get('/', async (req, res) => {
                             as stock_oeufs
                     `);
                 stockOeufs = oeufsStockResult.recordset[0].stock_oeufs;
+
+                // Calculer les œufs pourris totaux pour cette race jusqu'à la date
+                const oeufsPourrissResult = await pool.request()
+                    .input('race_pourris_' + lot.id, sql.Int, lot.race_id)
+                    .input('date_pourris_' + lot.id, sql.Date, dateConsultation)
+                    .query(`
+                        SELECT ISNULL(SUM(oeufs_pourris), 0) as total_pourris
+                        FROM transformation
+                        WHERE race_id = @race_pourris_${lot.id} AND date_transformation <= @date_pourris_${lot.id}
+                    `);
+                oeufsPourrissTotal = oeufsPourrissResult.recordset[0].total_pourris;
             }
 
             // Poids à l'entrée (utiliser config cumulé si poids_initial du lot est 0)
@@ -385,7 +397,8 @@ router.get('/', async (req, res) => {
                 benefice_mois: beneficeMois,
                 benefice_total: beneficeTotal,
                 estimation_valeur_poulet: pouletsVivants * poidsMoyen * prixVenteGramme,
-                estimation_valeur_oeufs: stockOeufs * (configPrix ? parseFloat(configPrix.prix_oeuf) : 0)
+                estimation_valeur_oeufs: stockOeufs * (configPrix ? parseFloat(configPrix.prix_oeuf) : 0),
+                estimation_valeur_oeufs_pourris: oeufsPourrissTotal * (configPrix ? parseFloat(configPrix.prix_oeuf) : 0)
             });
         }
 
