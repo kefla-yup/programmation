@@ -42,6 +42,10 @@ export interface Mortalite {
   lot_nom: string;
   date_mortalite: string;
   nombre: number;
+  nombre_morts_males?: number;
+  nombre_morts_femelles?: number;
+  pct_morts_males?: number;
+  pct_morts_femelles?: number;
 }
 
 export interface Oeuf {
@@ -109,4 +113,5 @@ export interface StockItem {
   benefice_total: number;
   estimation_valeur_poulet: number;
   estimation_valeur_oeufs: number;
+  estimation_valeur_oeufs_pourris?: number;
 }
