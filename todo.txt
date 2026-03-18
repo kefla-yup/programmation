@@ -2,21 +2,22 @@
          TODO / FONCTIONNALITES IMPLEMENTEES
 ============================================================
 
+
 1. Gestion des lots
 - Tout nouveau lot créé est défini par défaut en femelle
 - Chaque lot a : nom, date_entree, nombre, race, age_entree_semaine, poids_initial, source (direct/transformation), sexe (femelle/mâle)
 
 2. Transformation automatique des oeufs (éclosion)
-Lors de la consultation du stock, le système vérifie automatiquement si des oeufs ont atteint leur date d'éclosion (date_reception + nb_jour_eclosion - 1).
+Lors de la consultation du stock, le système vérifie automatiquement si des oeufs ont atteint leur date d'éclosion (date_reception + nb_jour_eclosion).
 
-Exemple avec 1 000 oeufs :
+Exemple avec 100 oeufs reçus le 02/02/2026 et nb_jour_eclosion=30:
 
 | Etape                 | Calcul         | Résultat        |
-| Oeufs de départ       | —              | 1 000           |
-| Oeufs pourris (30%)   | 1 000 * 30%    | 300 perdus      |
-| Oeufs éclos (70%)     | 1 000 * 70%    | 700 poussins    |
-| → Mâles (30%)         | 700 * 30%      | 210 mâles       |
-| → Femelles (70%)      | 700 * 70%      | 490 femelles    |
+| Oeufs de départ       | —              | 100             |
+| Oeufs pourris (30%)   | 100 * 30%      | 30 perdus       |
+| Oeufs éclos (70%)     | 100 * 70%      | 70 poussins     |
+| → Mâles (30%)         | 70 * 30%       | 21 mâles        |
+| → Femelles (70%)      | 70 * 70%       | 49 femelles     |
 
 Résultat automatique :
 - Création d'un lot femelles (source='transformation', sexe='femelle')
@@ -59,3 +60,7 @@ Chaque race possède 3 paramètres configurables manuellement :
 - Mortalité : enregistrement des morts par lot
 - Vue Stock : tableau récapitulatif avec calculs automatiques
 - Poids Poulet : consultation du poids estimé par lot
+
+
+ajoute colonne estimation valeur des oeufs pourries et 
+dans mortalite y il a % de mort male et % de mort femelle par Exemple : 25 morts dont 40% male et 60 % femelle

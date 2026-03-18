@@ -1,3 +1,6 @@
+-- ============================================================
+-- Script d'initialisation de la base de donnees poulet_db
+-- ============================================================
 
 IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'poulet_db')
 BEGIN
@@ -6,41 +9,6 @@ END
 GO
 
 USE poulet_db;
-GO
-
--- ============================================================
--- TRUNCATE ALL TABLES (empty the database)
--- ============================================================
-BEGIN TRY
-    DISABLE TRIGGER ALL ON transformation;
-    DISABLE TRIGGER ALL ON mortalite;
-    DISABLE TRIGGER ALL ON oeuf;
-    DISABLE TRIGGER ALL ON lot;
-    DISABLE TRIGGER ALL ON config_prix;
-    DISABLE TRIGGER ALL ON config_poids;
-    DISABLE TRIGGER ALL ON race;
-
-    TRUNCATE TABLE transformation;
-    TRUNCATE TABLE mortalite;
-    TRUNCATE TABLE oeuf;
-    TRUNCATE TABLE lot;
-    TRUNCATE TABLE config_prix;
-    TRUNCATE TABLE config_poids;
-    TRUNCATE TABLE race;
-
-    ENABLE TRIGGER ALL ON race;
-    ENABLE TRIGGER ALL ON config_poids;
-    ENABLE TRIGGER ALL ON config_prix;
-    ENABLE TRIGGER ALL ON lot;
-    ENABLE TRIGGER ALL ON oeuf;
-    ENABLE TRIGGER ALL ON mortalite;
-    ENABLE TRIGGER ALL ON transformation;
-
-    PRINT 'Tables tronquées avec succès';
-END TRY
-BEGIN CATCH
-    PRINT 'Les tables n''existent pas encore - création en cours...';
-END CATCH
 GO
 
 -- ============================================================
@@ -59,7 +27,7 @@ END
 GO
 
 -- ============================================================
--- TABLE: config_poids (configuration poids par semaine par race)
+-- TABLE: config_poids
 -- ============================================================
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='config_poids' AND xtype='U')
 BEGIN
@@ -77,7 +45,7 @@ END
 GO
 
 -- ============================================================
--- TABLE: config_prix (configuration prix par race)
+-- TABLE: config_prix
 -- ============================================================
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='config_prix' AND xtype='U')
 BEGIN
@@ -95,7 +63,7 @@ END
 GO
 
 -- ============================================================
--- TABLE: lot (lots de poulets)
+-- TABLE: lot
 -- ============================================================
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='lot' AND xtype='U')
 BEGIN
@@ -116,22 +84,8 @@ BEGIN
 END
 GO
 
--- Add missing columns if table already exists
-IF EXISTS (SELECT * FROM sysobjects WHERE name='lot' AND xtype='U')
-BEGIN
-    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='lot' AND COLUMN_NAME='nombre_femelles')
-    BEGIN
-        ALTER TABLE lot ADD nombre_femelles INT NOT NULL DEFAULT 0;
-    END
-    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='lot' AND COLUMN_NAME='nombre_males')
-    BEGIN
-        ALTER TABLE lot ADD nombre_males INT NOT NULL DEFAULT 0;
-    END
-END
-GO
-
 -- ============================================================
--- TABLE: mortalite (suivi des morts par lot)
+-- TABLE: mortalite
 -- ============================================================
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='mortalite' AND xtype='U')
 BEGIN
@@ -147,22 +101,8 @@ BEGIN
 END
 GO
 
--- Add missing columns if table already exists
-IF EXISTS (SELECT * FROM sysobjects WHERE name='mortalite' AND xtype='U')
-BEGIN
-    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='mortalite' AND COLUMN_NAME='nombre_morts_males')
-    BEGIN
-        ALTER TABLE mortalite ADD nombre_morts_males INT NOT NULL DEFAULT 0;
-    END
-    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='mortalite' AND COLUMN_NAME='nombre_morts_femelles')
-    BEGIN
-        ALTER TABLE mortalite ADD nombre_morts_femelles INT NOT NULL DEFAULT 0;
-    END
-END
-GO
-
 -- ============================================================
--- TABLE: oeuf (entree d'oeufs)
+-- TABLE: oeuf
 -- ============================================================
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='oeuf' AND xtype='U')
 BEGIN
@@ -177,7 +117,7 @@ END
 GO
 
 -- ============================================================
--- TABLE: transformation (oeuf -> poulet)
+-- TABLE: transformation
 -- ============================================================
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='transformation' AND xtype='U')
 BEGIN
@@ -196,20 +136,20 @@ END
 GO
 
 -- ============================================================
--- DONNEES INITIALES: races
+-- DONNEES INITIALES: race Borboneze
 -- ============================================================
-IF NOT EXISTS (SELECT * FROM race WHERE nom = 'Borbonèze')
+IF NOT EXISTS (SELECT * FROM race WHERE nom = 'Borboneze')
 BEGIN
-    INSERT INTO race (nom, taux_perte_oeufs, ratio_male_femelle) VALUES ('Borbonèze', 0, 30);
+    INSERT INTO race (nom, taux_perte_oeufs, ratio_male_femelle) VALUES ('Borboneze', 0, 30);
 END
 GO
 
 -- ============================================================
 -- DONNEES INITIALES: config_poids pour Borboneze
 -- ============================================================
-DECLARE @borbo_id INT = (SELECT id FROM race WHERE nom = 'Borbonèze');
+DECLARE @borbo_id INT = (SELECT id FROM race WHERE nom = 'Borboneze');
 
-IF NOT EXISTS (SELECT * FROM config_poids WHERE race_id = @borbo_id AND semaine = 0)
+IF @borbo_id IS NOT NULL AND NOT EXISTS (SELECT * FROM config_poids WHERE race_id = @borbo_id)
 BEGIN
     INSERT INTO config_poids (race_id, semaine, poids_cumule, variation, nourriture_jour) VALUES
     (@borbo_id, 0,  50,  NULL, 0),
@@ -244,56 +184,14 @@ GO
 -- ============================================================
 -- DONNEES INITIALES: config_prix pour Borboneze
 -- ============================================================
-DECLARE @borbo_prix INT = (SELECT id FROM race WHERE nom = 'Borbonèze');
+DECLARE @borbo_prix INT = (SELECT id FROM race WHERE nom = 'Borboneze');
 
-IF NOT EXISTS (SELECT * FROM config_prix WHERE race_id = @borbo_prix)
+IF @borbo_prix IS NOT NULL AND NOT EXISTS (SELECT * FROM config_prix WHERE race_id = @borbo_prix)
 BEGIN
     INSERT INTO config_prix (race_id, prix_achat_tete, prix_vente_gramme, prix_oeuf, prix_nourriture_gramme, nb_jour_eclosion)
     VALUES (@borbo_prix, 500, 15, 500, 5, 30);
 END
 GO
 
--- ============================================================
--- DONNEES INITIALES: lots
--- ============================================================
-DECLARE @borbo_lot INT = (SELECT id FROM race WHERE nom = 'Borbonèze');
-
-IF NOT EXISTS (SELECT * FROM lot WHERE nom = 'Lot 1')
-BEGIN
-    INSERT INTO lot (nom, date_entree, nombre, race_id, age_entree_semaine, poids_initial, source, sexe)
-    VALUES ('Lot 1', '2026-01-01', 500, @borbo_lot, 0, 50.00, 'direct', 'femelle');
-END
-GO
-
--- ============================================================
--- DONNEES INITIALES: mortalite
--- ============================================================
-DECLARE @lot1_id INT = (SELECT id FROM lot WHERE nom = 'Lot 1');
-
-IF NOT EXISTS (SELECT * FROM mortalite WHERE lot_id = @lot1_id AND date_mortalite = '2026-02-01')
-BEGIN
-    INSERT INTO mortalite (lot_id, date_mortalite, nombre)
-    VALUES (@lot1_id, '2026-02-01', 15);
-END
-GO
-
--- ============================================================
--- DONNEES INITIALES: oeufs
--- ============================================================
-DECLARE @borbo_oeuf INT = (SELECT id FROM race WHERE nom = 'Borbonèze');
-
-IF NOT EXISTS (SELECT * FROM oeuf WHERE date_reception = '2026-02-02' AND race_id = @borbo_oeuf)
-BEGIN
-    INSERT INTO oeuf (date_reception, race_id, nombre)
-    VALUES ('2026-02-02', @borbo_oeuf, 100);
-END
-
-IF NOT EXISTS (SELECT * FROM oeuf WHERE date_reception = '2026-02-15' AND race_id = @borbo_oeuf)
-BEGIN
-    INSERT INTO oeuf (date_reception, race_id, nombre)
-    VALUES ('2026-02-15', @borbo_oeuf, 150);
-END
-GO
-
-PRINT 'Base de données poulet_db initialisée avec succès !';
+PRINT 'Base de donnees poulet_db initialisee avec succes!';
 GO

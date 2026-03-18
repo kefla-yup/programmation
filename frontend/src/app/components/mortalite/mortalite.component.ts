@@ -35,7 +35,17 @@ export class MortaliteComponent implements OnInit {
   }
 
   add(): void {
-    const data = { ...this.form };
+    const data: any = {
+      lot_id: this.form.lot_id,
+      date_mortalite: this.form.date_mortalite,
+      nombre: this.form.nombre
+    };
+    const pctM = this.form.pct_males || 0;
+    const pctF = this.form.pct_femelles || 0;
+    if (pctM > 0 || pctF > 0) {
+      data.nombre_morts_males = Math.round(data.nombre * pctM / 100);
+      data.nombre_morts_femelles = data.nombre - data.nombre_morts_males;
+    }
     this.api.addMortalite(data).subscribe({
       next: () => {
         this.msg.show('Mortalité enregistrée');
@@ -53,8 +63,8 @@ export class MortaliteComponent implements OnInit {
       lot_id: m.lot_id,
       date_mortalite: m.date_mortalite.split('T')[0],
       nombre: m.nombre,
-      nombre_morts_males: m.nombre_morts_males || 0,
-      nombre_morts_femelles: m.nombre_morts_femelles || 0
+      pct_males: m.pct_morts_males || 0,
+      pct_femelles: m.pct_morts_femelles || 0
     };
   }
 
@@ -64,7 +74,20 @@ export class MortaliteComponent implements OnInit {
   }
 
   saveEdit(id: number): void {
-    const data = { ...this.editForm };
+    const data: any = {
+      lot_id: this.editForm.lot_id,
+      date_mortalite: this.editForm.date_mortalite,
+      nombre: this.editForm.nombre
+    };
+    const pctM = this.editForm.pct_males || 0;
+    const pctF = this.editForm.pct_femelles || 0;
+    if (pctM > 0 || pctF > 0) {
+      data.nombre_morts_males = Math.round(data.nombre * pctM / 100);
+      data.nombre_morts_femelles = data.nombre - data.nombre_morts_males;
+    } else {
+      data.nombre_morts_males = 0;
+      data.nombre_morts_femelles = 0;
+    }
     this.api.updateMortalite(id, data).subscribe({
       next: () => {
         this.msg.show('Mortalité modifiée avec succès');

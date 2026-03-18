@@ -22,6 +22,18 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const { race_id, prix_achat_tete, prix_vente_gramme, prix_nourriture_gramme, prix_oeuf, nb_jour_eclosion } = req.body;
+
+        // Validation
+        if (!race_id || prix_achat_tete === undefined || prix_vente_gramme === undefined) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+        if (prix_achat_tete < 0 || prix_vente_gramme < 0) {
+            return res.status(400).json({ error: 'Prices cannot be negative' });
+        }
+        if (nb_jour_eclosion !== undefined && (nb_jour_eclosion <= 0 || !Number.isInteger(nb_jour_eclosion))) {
+            return res.status(400).json({ error: 'Incubation days must be a positive integer' });
+        }
+
         const pool = await getPool();
 
         // Upsert: update si existe, insert sinon
@@ -58,6 +70,15 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { prix_achat_tete, prix_vente_gramme, prix_nourriture_gramme, prix_oeuf, nb_jour_eclosion } = req.body;
+
+        // Validation
+        if (prix_achat_tete === undefined || prix_vente_gramme === undefined) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+        if (prix_achat_tete < 0 || prix_vente_gramme < 0) {
+            return res.status(400).json({ error: 'Prices cannot be negative' });
+        }
+
         const pool = await getPool();
         const result = await pool.request()
             .input('id', sql.Int, req.params.id)
@@ -77,6 +98,19 @@ router.put('/:id', async (req, res) => {
                 WHERE id = @id
             `);
         res.json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// DELETE config prix
+router.delete('/:id', async (req, res) => {
+    try {
+        const pool = await getPool();
+        await pool.request()
+            .input('id', sql.Int, req.params.id)
+            .query('DELETE FROM config_prix WHERE id = @id');
+        res.json({ message: 'Configuration prix supprimée' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
