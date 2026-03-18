@@ -1,8 +1,6 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import { ApiService } from '../../services/api.service';
 import { MessageService } from '../../services/message.service';
 import { Oeuf, StockOeuf, Race } from '../../models/models';
@@ -13,7 +11,7 @@ import { Oeuf, StockOeuf, Race } from '../../models/models';
   imports: [CommonModule, FormsModule],
   templateUrl: './oeufs.component.html'
 })
-export class OeufsComponent implements OnInit, OnDestroy {
+export class OeufsComponent implements OnInit {
   oeufsList: Oeuf[] = [];
   stockOeufs: StockOeuf[] = [];
   races: Race[] = [];
@@ -21,7 +19,6 @@ export class OeufsComponent implements OnInit, OnDestroy {
   form: any = {};
   editing: number | null = null;
   editForm: any = {};
-  private destroy$ = new Subject<void>();
 
   constructor(private api: ApiService, public msg: MessageService) {}
 
@@ -30,23 +27,18 @@ export class OeufsComponent implements OnInit, OnDestroy {
     this.load();
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
   loadRaces(): void {
-    this.api.getRaces().pipe(takeUntil(this.destroy$)).subscribe(data => this.races = data);
+    this.api.getRaces().subscribe(data => this.races = data);
   }
 
   load(): void {
-    this.api.getOeufs().pipe(takeUntil(this.destroy$)).subscribe(data => this.oeufsList = data);
-    this.api.getStockOeufs().pipe(takeUntil(this.destroy$)).subscribe(data => this.stockOeufs = data);
+    this.api.getOeufs().subscribe(data => this.oeufsList = data);
+    this.api.getStockOeufs().subscribe(data => this.stockOeufs = data);
   }
 
   add(): void {
     const data = { ...this.form };
-    this.api.addOeuf(data).pipe(takeUntil(this.destroy$)).subscribe({
+    this.api.addOeuf(data).subscribe({
       next: () => {
         this.msg.show('Oeufs ajoutés avec succès');
         this.form = {};
@@ -73,7 +65,7 @@ export class OeufsComponent implements OnInit, OnDestroy {
 
   saveEdit(id: number): void {
     const data = { ...this.editForm };
-    this.api.updateOeuf(id, data).pipe(takeUntil(this.destroy$)).subscribe({
+    this.api.updateOeuf(id, data).subscribe({
       next: () => {
         this.msg.show("Entrée d'oeufs modifiée avec succès");
         this.editing = null;
@@ -85,7 +77,7 @@ export class OeufsComponent implements OnInit, OnDestroy {
 
   remove(id: number): void {
     if (confirm("Supprimer cette entrée d'oeufs ?")) {
-      this.api.deleteOeuf(id).pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.api.deleteOeuf(id).subscribe(() => {
         this.msg.show('Entrée supprimée');
         this.load();
       });

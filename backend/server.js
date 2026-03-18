@@ -24,7 +24,6 @@ app.use('/api/oeufs', require('./routes/oeufs'));
 app.use('/api/transformation', require('./routes/transformation'));
 app.use('/api/mortalite', require('./routes/mortalite'));
 app.use('/api/stock', require('./routes/stock'));
-app.use('/api/poids-poulet', require('./routes/poidsPoulet'));
 
 // Route par défaut → frontend
 app.get('*', (req, res) => {

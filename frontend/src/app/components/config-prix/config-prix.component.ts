@@ -45,11 +45,10 @@ export class ConfigPrixComponent implements OnInit {
   edit(item: ConfigPrix): void {
     this.form = {
       race_id: item.race_id,
-      prix_achat_tete: Number(item.prix_achat_tete),
+      prix_achat_gramme: Number(item.prix_achat_gramme),
       prix_vente_gramme: Number(item.prix_vente_gramme),
       prix_nourriture_gramme: Number(item.prix_nourriture_gramme),
-      prix_oeuf: Number(item.prix_oeuf),
-      nb_jour_eclosion: Number(item.nb_jour_eclosion)
+      prix_oeuf: Number(item.prix_oeuf)
     };
   }
 }

@@ -26,14 +26,6 @@
             <label class="form-label">Nombre de morts</label>
             <input type="number" class="form-control" [(ngModel)]="form.nombre" name="nombre" min="1" required>
           </div>
-          <div class="col-6 col-md-2">
-            <label class="form-label">Mâles %</label>
-            <input type="number" class="form-control" [(ngModel)]="form.pct_males" name="pct_males" min="0" max="100">
-          </div>
-          <div class="col-6 col-md-2">
-            <label class="form-label">Femelles %</label>
-            <input type="number" class="form-control" [(ngModel)]="form.pct_femelles" name="pct_femelles" min="0" max="100">
-          </div>
           <div class="col-12 col-md-3 d-flex align-items-end gap-2">
             <button type="submit" class="btn btn-danger"><i class="bi bi-check-lg"></i></button>
             <button type="button" class="btn btn-secondary" (click)="showForm = false"><i class="bi bi-x-lg"></i></button>
@@ -52,9 +44,7 @@
             <tr>
               <th>Date</th>
               <th>Lot</th>
-              <th>Total</th>
-              <th>Mâles %</th>
-              <th>Femelles %</th>
+              <th>Morts</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -64,8 +54,6 @@
                 <td>{{ m.date_mortalite | date:'dd/MM/yyyy':'UTC' }}</td>
                 <td><strong>{{ m.lot_nom }}</strong></td>
                 <td><span class="badge bg-danger">{{ m.nombre }}</span></td>
-                <td><span class="badge bg-info">{{ m.pct_morts_males || 0 }}%</span></td>
-                <td><span class="badge bg-info">{{ m.pct_morts_femelles || 0 }}%</span></td>
                 <td>
                   <button class="btn btn-outline-warning btn-sm me-1" (click)="edit(m)"><i class="bi bi-pencil"></i></button>
                   <button class="btn btn-outline-danger btn-sm" (click)="remove(m.id)"><i class="bi bi-trash"></i></button>
@@ -79,8 +67,6 @@
                   </select>
                 </td>
                 <td><input type="number" class="form-control form-control-sm" [(ngModel)]="editForm.nombre" min="1"></td>
-                <td><input type="number" class="form-control form-control-sm" [(ngModel)]="editForm.pct_males" min="0" max="100" placeholder="Mâles %"></td>
-                <td><input type="number" class="form-control form-control-sm" [(ngModel)]="editForm.pct_femelles" min="0" max="100" placeholder="Femelles %"></td>
                 <td>
                   <button class="btn btn-success btn-sm me-1" (click)="saveEdit(m.id)"><i class="bi bi-check-lg"></i></button>
                   <button class="btn btn-secondary btn-sm" (click)="cancelEdit()"><i class="bi bi-x-lg"></i></button>
@@ -88,7 +74,7 @@
               </tr>
             </ng-container>
             <tr *ngIf="mortaliteList.length === 0">
-              <td colspan="6" class="empty-state"><i class="bi bi-inbox"></i>Aucune mortalité</td>
+              <td colspan="4" class="empty-state"><i class="bi bi-inbox"></i>Aucune mortalité</td>
             </tr>
           </tbody>
         </table>

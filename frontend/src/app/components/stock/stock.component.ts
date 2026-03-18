@@ -1,8 +1,6 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import { ApiService } from '../../services/api.service';
 import { MessageService } from '../../services/message.service';
 import { StockItem } from '../../models/models';
@@ -14,11 +12,10 @@ import { StockItem } from '../../models/models';
   templateUrl: './stock.component.html',
   styleUrl: './stock.component.css'
 })
-export class StockComponent implements OnInit, OnDestroy {
+export class StockComponent implements OnInit {
   stockList: StockItem[] = [];
   dateFiltre: string = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
   periodeNourriture: string = 'total';
-  private destroy$ = new Subject<void>();
 
   constructor(private api: ApiService, public msg: MessageService) {}
 
@@ -26,13 +23,8 @@ export class StockComponent implements OnInit, OnDestroy {
     this.load();
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
   load(): void {
-    this.api.getStock(this.dateFiltre).pipe(takeUntil(this.destroy$)).subscribe({
+    this.api.getStock(this.dateFiltre).subscribe({
       next: (data) => this.stockList = data,
       error: (err) => this.msg.show(err.error?.error || 'Erreur chargement stock', 'error')
     });

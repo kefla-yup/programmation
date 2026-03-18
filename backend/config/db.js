@@ -1,12 +1,11 @@
-require('dotenv').config();
 const sql = require('mssql');
 
 const dbConfig = {
-    user: process.env.DB_USER || 'SA',
-    password: process.env.DB_PASSWORD || 'Sqlserver1!',
-    server: process.env.DB_SERVER || 'localhost',
-    port: parseInt(process.env.DB_PORT || '1433'),
-    database: process.env.DB_NAME || 'poulet_db',
+    user: 'SA',
+    password: 'Sqlserver1!',
+    server: 'localhost',
+    port: 1433,
+    database: 'poulet_db',
     options: {
         encrypt: false,
         trustServerCertificate: true
