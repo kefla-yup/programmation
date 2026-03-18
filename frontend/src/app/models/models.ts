@@ -17,10 +17,11 @@ export interface ConfigPrix {
   id: number;
   race_id: number;
   race_nom: string;
-  prix_achat_gramme: number;
+  prix_achat_tete: number;
   prix_vente_gramme: number;
   prix_nourriture_gramme: number;
   prix_oeuf: number;
+  nb_jour_eclosion: number;
 }
 
 export interface Lot {
@@ -41,6 +42,10 @@ export interface Mortalite {
   lot_nom: string;
   date_mortalite: string;
   nombre: number;
+  nombre_morts_males?: number;
+  nombre_morts_femelles?: number;
+  pct_morts_males?: number;
+  pct_morts_femelles?: number;
 }
 
 export interface Oeuf {
@@ -108,4 +113,5 @@ export interface StockItem {
   benefice_total: number;
   estimation_valeur_poulet: number;
   estimation_valeur_oeufs: number;
+  estimation_valeur_oeufs_pourris?: number;
 }

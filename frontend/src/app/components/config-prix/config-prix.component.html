@@ -16,8 +16,8 @@
             </select>
           </div>
           <div class="col-6 col-md-2">
-            <label class="form-label">Prix Achat (Ar/g)</label>
-            <input type="number" class="form-control" [(ngModel)]="form.prix_achat_gramme" name="prix_achat" step="0.01" required>
+            <label class="form-label">Prix Achat (Ar/tête)</label>
+            <input type="number" class="form-control" [(ngModel)]="form.prix_achat_tete" name="prix_achat" step="0.01" required>
           </div>
           <div class="col-6 col-md-2">
             <label class="form-label">Prix Vente (Ar/g)</label>
@@ -30,6 +30,10 @@
           <div class="col-6 col-md-2">
             <label class="form-label">Prix Oeuf (Ar)</label>
             <input type="number" class="form-control" [(ngModel)]="form.prix_oeuf" name="prix_oeuf" step="0.01">
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label">Nb Jours Éclosion</label>
+            <input type="number" class="form-control" [(ngModel)]="form.nb_jour_eclosion" name="nb_jour_eclosion" min="1">
           </div>
           <div class="col-6 col-md-3 d-flex align-items-end">
             <button type="submit" class="btn btn-success"><i class="bi bi-save me-1"></i>Enregistrer</button>
@@ -51,18 +55,18 @@
               <th>Prix Vente</th>
               <th>Prix Nourriture</th>
               <th>Prix Oeuf</th>
-              <th>Marge</th>
+              <th>Jours Éclosion</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let item of prixList">
               <td><strong>{{ item.race_nom }}</strong></td>
-              <td>{{ item.prix_achat_gramme | number:'1.0-0' }} Ar</td>
+              <td>{{ item.prix_achat_tete | number:'1.0-0' }} Ar</td>
               <td>{{ item.prix_vente_gramme | number:'1.0-0' }} Ar</td>
               <td>{{ item.prix_nourriture_gramme | number:'1.0-0' }} Ar/g</td>
               <td>{{ item.prix_oeuf | number:'1.0-0' }} Ar</td>
-              <td><span class="badge bg-success">+{{ item.prix_vente_gramme - item.prix_achat_gramme | number:'1.0-0' }} Ar/g</span></td>
+              <td>{{ item.nb_jour_eclosion }} jours</td>
               <td><button class="btn btn-outline-warning btn-sm" (click)="edit(item)"><i class="bi bi-pencil"></i></button></td>
             </tr>
           </tbody>

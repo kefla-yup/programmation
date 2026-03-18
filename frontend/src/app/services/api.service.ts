@@ -25,6 +25,14 @@ export class ApiService {
     return this.http.delete<void>(`${this.baseUrl}/races/${id}`);
   }
 
+  getRaceGenetics(id: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/races/${id}/genetics`);
+  }
+
+  updateRaceGenetics(id: number, data: any): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/races/${id}/genetics`, data);
+  }
+
   // Config Poids
   getConfigPoids(raceId?: number): Observable<ConfigPoids[]> {
     let url = `${this.baseUrl}/config-poids`;
@@ -121,6 +129,11 @@ export class ApiService {
 
   deleteMortalite(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/mortalite/${id}`);
+  }
+
+  // Poids Poulet
+  getPoidsPoulet(raceId: number, dateDebut: string, dateFin: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/poids-poulet?race_id=${raceId}&date_debut=${dateDebut}&date_fin=${dateFin}`);
   }
 
   // Stock

@@ -15,6 +15,14 @@ export class MessageService {
     }, 4000);
   }
 
+  success(msg: string): void {
+    this.show(msg, 'success');
+  }
+
+  error(msg: string): void {
+    this.show(msg, 'error');
+  }
+
   clear(): void {
     this.message = null;
   }

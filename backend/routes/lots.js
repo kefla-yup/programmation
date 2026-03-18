@@ -44,6 +44,24 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const { nom, date_entree, nombre, race_id, age_entree_semaine, source } = req.body;
+
+        // Validation
+        if (!nom || !date_entree || !race_id || nombre === undefined) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+        if (nombre <= 0 || !Number.isInteger(nombre)) {
+            return res.status(400).json({ error: 'Nombre must be a positive integer' });
+        }
+        if (age_entree_semaine !== undefined && (age_entree_semaine < 0 || !Number.isInteger(age_entree_semaine))) {
+            return res.status(400).json({ error: 'Age must be a non-negative integer' });
+        }
+
+        // Validate date format
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(date_entree)) {
+            return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
+        }
+
         const pool = await getPool();
 
         // Récupérer le poids initial = somme cumulative de S0 à Sn

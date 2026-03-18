@@ -41,6 +41,21 @@ router.get('/stock', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const { date_reception, race_id, nombre } = req.body;
+
+        // Validation
+        if (!date_reception || !race_id || nombre === undefined) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+        if (nombre <= 0 || !Number.isInteger(nombre)) {
+            return res.status(400).json({ error: 'Nombre must be a positive integer' });
+        }
+
+        // Validate date format
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(date_reception)) {
+            return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
+        }
+
         const pool = await getPool();
         const result = await pool.request()
             .input('date_reception', sql.Date, date_reception)

@@ -5,6 +5,9 @@
       <li><a href="#" [class.active]="currentView === 'races'" (click)="setView('races'); $event.preventDefault()">
         <i class="bi bi-egg-fill"></i><span>Races</span>
       </a></li>
+      <li><a href="#" [class.active]="currentView === 'raceGenetics'" (click)="setView('raceGenetics'); $event.preventDefault()">
+        <i class="bi bi-bezier"></i><span>Génétique</span>
+      </a></li>
       <li><a href="#" [class.active]="currentView === 'configPoids'" (click)="setView('configPoids'); $event.preventDefault()">
         <i class="bi bi-speedometer2"></i><span>Poids</span>
       </a></li>
@@ -43,6 +46,9 @@
     <ul class="sidebar-nav">
       <li><a href="#" [class.active]="currentView === 'stock'" (click)="setView('stock'); $event.preventDefault()">
         <i class="bi bi-graph-up"></i><span>Vue Stock</span>
+      </a></li>
+      <li><a href="#" [class.active]="currentView === 'poidsPoulet'" (click)="setView('poidsPoulet'); $event.preventDefault()">
+        <i class="bi bi-calculator"></i><span>Poids Poulet</span>
       </a></li>
     </ul>
   </div>

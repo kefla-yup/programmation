@@ -23,6 +23,24 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const { date_transformation, race_id, oeufs_transformes, nouveaux_poussins } = req.body;
+
+        // Validate input
+        if (!date_transformation || !race_id || !oeufs_transformes || !nouveaux_poussins) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+        if (oeufs_transformes <= 0 || nouveaux_poussins <= 0) {
+            return res.status(400).json({ error: 'Counts must be positive' });
+        }
+        if (oeufs_transformes < nouveaux_poussins) {
+            return res.status(400).json({ error: 'Cannot have more chicks than eggs' });
+        }
+
+        // Validate date format
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(date_transformation)) {
+            return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
+        }
+
         const pool = await getPool();
 
         // Vérifier le stock d'oeufs disponible
@@ -44,10 +62,10 @@ router.post('/', async (req, res) => {
 
         // Récupérer le poids à S0 pour la race
         const poidsResult = await pool.request()
-            .input('race_id2', sql.Int, race_id)
+            .input('race_id_poids', sql.Int, race_id)
             .query(`
                 SELECT poids_cumule FROM config_poids
-                WHERE race_id = @race_id2 AND semaine = 0
+                WHERE race_id = @race_id_poids AND semaine = 0
             `);
 
         const poidsInitial = poidsResult.recordset.length > 0
@@ -56,43 +74,117 @@ router.post('/', async (req, res) => {
 
         // Récupérer le nom de la race
         const raceResult = await pool.request()
-            .input('race_id3', sql.Int, race_id)
-            .query('SELECT nom FROM race WHERE id = @race_id3');
+            .input('race_id_nom', sql.Int, race_id)
+            .query('SELECT nom FROM race WHERE id = @race_id_nom');
+
+        // NULL check for race
+        if (!raceResult.recordset.length) {
+            return res.status(404).json({ error: 'Race not found' });
+        }
         const raceNom = raceResult.recordset[0].nom;
 
-        // Créer automatiquement un nouveau lot
-        const lotResult = await pool.request()
-            .input('nom', sql.NVarChar, `Lot-Transfo-${raceNom}-${date_transformation}`)
-            .input('date_entree', sql.Date, date_transformation)
-            .input('nombre', sql.Int, nouveaux_poussins)
-            .input('race_id4', sql.Int, race_id)
-            .input('poids_initial', sql.Decimal(10, 2), poidsInitial)
-            .input('source', sql.NVarChar, 'transformation')
-            .query(`
-                INSERT INTO lot (nom, date_entree, nombre, race_id, age_entree_semaine, poids_initial, source)
-                OUTPUT INSERTED.*
-                VALUES (@nom, @date_entree, @nombre, @race_id4, 0, @poids_initial, @source)
-            `);
+        // Start transaction for atomic operations
+        const transaction = new sql.Transaction(pool);
+        try {
+            await transaction.begin();
 
-        const lotId = lotResult.recordset[0].id;
+            // Créer automatiquement un nouveau lot
+            const lotResult = await transaction.request()
+                .input('nom', sql.NVarChar, `Lot-Transfo-${raceNom}-${date_transformation}`)
+                .input('date_entree', sql.Date, date_transformation)
+                .input('nombre', sql.Int, nouveaux_poussins)
+                .input('race_id_lot', sql.Int, race_id)
+                .input('poids_initial', sql.Decimal(10, 2), poidsInitial)
+                .input('source', sql.NVarChar, 'transformation')
+                .query(`
+                    INSERT INTO lot (nom, date_entree, nombre, race_id, age_entree_semaine, poids_initial, source)
+                    OUTPUT INSERTED.*
+                    VALUES (@nom, @date_entree, @nombre, @race_id_lot, 0, @poids_initial, @source)
+                `);
 
-        // Enregistrer la transformation
-        const transResult = await pool.request()
+            const lotId = lotResult.recordset[0].id;
+
+            // Enregistrer la transformation
+            const transResult = await transaction.request()
+                .input('date_transformation', sql.Date, date_transformation)
+                .input('race_id_trans', sql.Int, race_id)
+                .input('oeufs_transformes', sql.Int, oeufs_transformes)
+                .input('nouveaux_poussins', sql.Int, nouveaux_poussins)
+                .input('lot_id', sql.Int, lotId)
+                .query(`
+                    INSERT INTO transformation (date_transformation, race_id, oeufs_transformes, nouveaux_poussins, lot_id)
+                    OUTPUT INSERTED.*
+                    VALUES (@date_transformation, @race_id_trans, @oeufs_transformes, @nouveaux_poussins, @lot_id)
+                `);
+
+            await transaction.commit();
+
+            res.status(201).json({
+                transformation: transResult.recordset[0],
+                lot: lotResult.recordset[0]
+            });
+        } catch (txErr) {
+            await transaction.rollback();
+            throw txErr;
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// PUT modifier une transformation
+router.put('/:id', async (req, res) => {
+    try {
+        const { date_transformation, oeufs_transformes, nouveaux_poussins } = req.body;
+
+        // Validate input
+        if (!date_transformation || oeufs_transformes === undefined || nouveaux_poussins === undefined) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+        if (oeufs_transformes <= 0 || nouveaux_poussins <= 0) {
+            return res.status(400).json({ error: 'Counts must be positive' });
+        }
+        if (oeufs_transformes < nouveaux_poussins) {
+            return res.status(400).json({ error: 'Cannot have more chicks than eggs' });
+        }
+
+        // Validate date format
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(date_transformation)) {
+            return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
+        }
+
+        const pool = await getPool();
+
+        // Récupérer la transformation actuelle
+        const currentTrans = await pool.request()
+            .input('id', sql.Int, req.params.id)
+            .query('SELECT * FROM transformation WHERE id = @id');
+
+        if (currentTrans.recordset.length === 0) {
+            return res.status(404).json({ error: 'Transformation not found' });
+        }
+
+        const trans = currentTrans.recordset[0];
+
+        // Update transformation
+        const result = await pool.request()
+            .input('id', sql.Int, req.params.id)
             .input('date_transformation', sql.Date, date_transformation)
-            .input('race_id5', sql.Int, race_id)
             .input('oeufs_transformes', sql.Int, oeufs_transformes)
+            .input('oeufs_pourris', sql.Int, oeufs_transformes - nouveaux_poussins)
             .input('nouveaux_poussins', sql.Int, nouveaux_poussins)
-            .input('lot_id', sql.Int, lotId)
             .query(`
-                INSERT INTO transformation (date_transformation, race_id, oeufs_transformes, nouveaux_poussins, lot_id)
+                UPDATE transformation
+                SET date_transformation = @date_transformation,
+                    oeufs_transformes = @oeufs_transformes,
+                    oeufs_pourris = @oeufs_pourris,
+                    nouveaux_poussins = @nouveaux_poussins
                 OUTPUT INSERTED.*
-                VALUES (@date_transformation, @race_id5, @oeufs_transformes, @nouveaux_poussins, @lot_id)
+                WHERE id = @id
             `);
 
-        res.status(201).json({
-            transformation: transResult.recordset[0],
-            lot: lotResult.recordset[0]
-        });
+        res.json(result.recordset[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

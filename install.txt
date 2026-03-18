@@ -27,4 +27,16 @@ pkill -f "node server.js" && sleep 2 && pkill -f "ng serve" && sleep 2
 ALTER LOGIN SA WITH PASSWORD = 'Sqlserver1!';
 GO
 
+SO c'est le jour 1 de la semaine 1 du coup il mange deja donc (S0 = J1) + J2 + J3 + ... + J7 = S1
+
+
+J'ai compris ! Le jour d'entrée (S0 = J1) compte comme un jour vécu, donc du 1er au 31 janvier = 31 jours (inclusif), pas 30. Ça change le poids et la nourriture.
+
+3 corrections à faire :
+
+Poids : le jour d'entrée compte → (diffJours + 1) / 7 au lieu de diffJours / 7
+Nourriture totale : boucler sur 31 jours (inclusif) → j <= diffJours
+Calculs financiers : utiliser le poids exact (pas arrondi) pour que le bénéfice tombe juste
+
+
 
